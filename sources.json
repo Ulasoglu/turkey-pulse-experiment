@@ -1,0 +1,110 @@
+{
+  "experiment": {
+    "name": "Turkey Pulse Zero-Euro Reality Test",
+    "duration_days": 7,
+    "collection_interval_minutes": 60,
+    "provinces": [
+      "İstanbul",
+      "Ankara",
+      "İzmir",
+      "Bursa",
+      "Antalya",
+      "Konya",
+      "Samsun",
+      "Çorum",
+      "Malatya",
+      "Bilecik",
+      "Artvin",
+      "Bayburt",
+      "Ağrı",
+      "Hakkâri",
+      "Şırnak"
+    ]
+  },
+  "sources": [
+    {
+      "id": "bursa_acik_yesil_catalog",
+      "province": "Bursa",
+      "name": "Bursa Açık Yeşil",
+      "source_type": "open_data_catalog",
+      "url": "https://acikyesil.bursa.bel.tr/dataset",
+      "rights_status": "open_license_verified",
+      "mode": "page_watch",
+      "enabled": true,
+      "notes": "Catalog contains JSON/GeoJSON datasets including Haberler, Etkinlikler and Duyurular. Direct event endpoints should be added once resource URLs are verified."
+    },
+    {
+      "id": "afad_event_service",
+      "province": "ALL",
+      "name": "AFAD Event Service",
+      "source_type": "national_emergency",
+      "url": "https://deprem.afad.gov.tr/event-service",
+      "rights_status": "reuse_needs_final_check",
+      "mode": "page_watch",
+      "enabled": true,
+      "notes": "Official event-service documentation page. The production collector should switch to the documented JSON endpoint after exact API query parameters are frozen."
+    }
+  ],
+  "province_source_status": {
+    "İstanbul": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Ankara": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "İzmir": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Bursa": {
+      "production_safe_active_sources": 1,
+      "needs_source_research": true
+    },
+    "Antalya": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Konya": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Samsun": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Çorum": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Malatya": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Bilecik": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Artvin": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Bayburt": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Ağrı": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Hakkâri": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    },
+    "Şırnak": {
+      "production_safe_active_sources": 0,
+      "needs_source_research": true
+    }
+  }
+}
