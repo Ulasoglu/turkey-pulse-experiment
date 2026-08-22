@@ -38,11 +38,11 @@
       "province": "ALL",
       "name": "AFAD Event Service",
       "source_type": "national_emergency",
-      "url": "https://deprem.afad.gov.tr/event-service",
+      "url": "https://deprem.afad.gov.tr/apiv2/event/filter",
       "rights_status": "reuse_needs_final_check",
-      "mode": "page_watch",
+      "mode": "afad_events",
       "enabled": true,
-      "notes": "Official event-service documentation page. The production collector should switch to the documented JSON endpoint after exact API query parameters are frozen."
+      "notes": "Official AFAD Event Web Service. Collector queries recent earthquake events as structured JSON. Reuse terms still require final verification before commercial use."
     }
   ],
   "province_source_status": {
