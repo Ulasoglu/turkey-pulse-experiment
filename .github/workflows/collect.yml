@@ -60,22 +60,3 @@ jobs:
 
           git pull --rebase origin main
           git push origin main
-      - name: Commit collected data
-        run: |
-          if [ ! -f data/raw_signals.jsonl ]; then
-            echo "No dataset created - nothing to commit."
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add data/raw_signals.jsonl
-
-          if git diff --cached --quiet; then
-            echo "No new data to commit."
-            exit 0
-          fi
-
-          git commit -m "chore: collect Turkey pulse signals"
-          git push origin main
