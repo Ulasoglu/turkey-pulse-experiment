@@ -42,6 +42,9 @@ jobs:
       - name: Filter signals
         run: python filter_signals.py
 
+      - name: Run signal engine
+        run: python signal_engine.py
+
       - name: Commit collected data
         run: |
           if [ ! -f data/raw_signals.jsonl ]; then
@@ -52,14 +55,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add data/raw_signals.jsonl data/filtered_signals.jsonl
+          git add data/raw_signals.jsonl data/filtered_signals.jsonl data/map_signals.jsonl
 
           if git diff --cached --quiet; then
             echo "No new data to commit."
             exit 0
           fi
 
-          git commit -m "chore: collect and filter Turkey pulse signals"
+          git commit -m "chore: collect, filter and score Turkey pulse signals"
 
           git pull --rebase origin main
           git push origin main
