@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import json
 import time
+from datetime import datetime, timedelta, timezone
+from urllib.parse import urljoin
 
 import requests
+from bs4 import BeautifulSoup
 
 import collector
 
@@ -10,6 +14,7 @@ MAX_CONNECT_SECONDS = 4
 MAX_READ_SECONDS = 8
 
 _original_get = requests.get
+_original_collect_municipal_feed = collector.collect_municipal_feed
 
 
 def guarded_get(url, *args, **kwargs):
@@ -35,15 +40,152 @@ def guarded_get(url, *args, **kwargs):
         raise
 
 
+def seen_urls(source_id):
+    result = set()
+    if not collector.OUT.exists():
+        return result
+    with collector.OUT.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            if row.get("source_id") == source_id and row.get("url"):
+                result.add(row["url"])
+    return result
+
+
+def collect_municipal_feed_fast(source):
+    if source.get("id") != "akom_istanbul_news":
+        return _original_collect_municipal_feed(source)
+
+    print("\n=== ISTANBUL / AKOM ===", flush=True)
+    collected_at = collector.now_iso()
+    known_hashes = collector.seen_hashes(source["id"])
+    known_urls = seen_urls(source["id"])
+
+    try:
+        response = requests.get(source["url"], headers=collector.HEADERS, timeout=30)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        discovered = []
+        local_seen = set()
+        for anchor in soup.select('a[href*="/haberler/"]'):
+            href = anchor.get("href")
+            if not href:
+                continue
+            article_url = urljoin(source["url"], href)
+            if article_url in local_seen:
+                continue
+            local_seen.add(article_url)
+            discovered.append((article_url, anchor))
+
+        skipped_known = 0
+        fetched = 0
+        items = []
+        for article_url, anchor in discovered:
+            if article_url in known_urls:
+                skipped_known += 1
+                continue
+            try:
+                detail = requests.get(article_url, headers=collector.HEADERS, timeout=25)
+                detail.raise_for_status()
+                ds = BeautifulSoup(detail.text, "html.parser")
+                heading = ds.find("h1") or ds.find("h2")
+                title = " ".join(
+                    (heading.get_text(" ", strip=True) if heading else anchor.get_text(" ", strip=True)).split()
+                )
+                if title:
+                    published_at = collector.parse_date_tr(ds.get_text(" ", strip=True)[:4000])
+                    items.append((title, published_at, article_url))
+                fetched += 1
+            except Exception as exc:
+                print("AKOM detail error", article_url, exc, flush=True)
+            time.sleep(0.1)
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        new_count = 0
+        for title, published_at, article_url in items:
+            if published_at:
+                try:
+                    if datetime.fromisoformat(published_at) < cutoff:
+                        continue
+                except ValueError:
+                    pass
+            content_hash = collector.sha256_json(
+                {
+                    "source": source["id"],
+                    "url": article_url,
+                    "title": title,
+                    "published_at": published_at,
+                }
+            )
+            if content_hash in known_hashes:
+                continue
+            row = collector.base_row(
+                source,
+                collected_at,
+                response.status_code,
+                content_hash,
+                title,
+                published_at,
+                article_url,
+            )
+            row["raw_summary"] = "municipal_feed item"
+            collector.append(row)
+            known_hashes.add(content_hash)
+            known_urls.add(article_url)
+            new_count += 1
+
+        print(
+            f"AKOM discovered={len(discovered)} skipped_known={skipped_known} "
+            f"detail_fetched={fetched} new={new_count}",
+            flush=True,
+        )
+    except Exception as exc:
+        collector.error_row(source, exc)
+        print("ERROR MUNICIPAL", source["id"], exc, flush=True)
+
+
+def run_source_with_label(source):
+    province = source.get("province") or "NATIONAL"
+    source_id = source.get("id") or "unknown"
+    print(f"\n=== {province.upper()} | {source_id} ===", flush=True)
+
+    mode = source.get("mode")
+    if mode == "bursa_events":
+        collector.collect_bursa_events(source)
+    elif mode == "izmir_events":
+        collector.collect_izmir_events(source)
+    elif mode == "ankara_events":
+        collector.collect_ankara_events(source)
+    elif mode == "afad_events":
+        collector.collect_afad_events(source)
+    elif mode == "municipal_feed":
+        collector.collect_municipal_feed(source)
+    else:
+        print("SKIP unsupported mode", source_id, mode, flush=True)
+
+
+def guarded_main():
+    enabled = [source for source in collector.load_manifest()["sources"] if source.get("enabled")]
+    print(f"Probing {len(enabled)} enabled sources", flush=True)
+    for source in enabled:
+        run_source_with_label(source)
+        time.sleep(0.25)
+
+
 def main():
-    # collector imports the same requests module, so replacing requests.get here
-    # automatically protects every network call in the existing collector.
     requests.get = guarded_get
+    collector.collect_municipal_feed = collect_municipal_feed_fast
+    collector.main = guarded_main
+
     started = time.perf_counter()
     try:
         collector.main()
     finally:
-        print(f"COLLECTOR TOTAL {time.perf_counter() - started:.2f}s", flush=True)
+        print(f"\nCOLLECTOR TOTAL {time.perf_counter() - started:.2f}s", flush=True)
 
 
 if __name__ == "__main__":
