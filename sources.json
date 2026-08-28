@@ -31,6 +31,23 @@
       "notes": "Official İzmir Büyükşehir Belediyesi open-data API for current culture and arts events; portal states daily updates and an open-data license."
     },
     {
+      "id": "ankara_abb_culture_events",
+      "province": "Ankara",
+      "name": "ABB Kültür Sanat Etkinlikleri",
+      "source_type": "municipal_official_events_html",
+      "url": "https://kultursanat.ankara.bel.tr/",
+      "discovery_urls": [
+        "https://kultursanat.ankara.bel.tr/",
+        "https://kultursanat.ankara.bel.tr/ankara-etkinlikleri",
+        "https://kultursanat.ankara.bel.tr/aylik-etkinlik-takvimi"
+      ],
+      "rights_status": "reuse_needs_final_check",
+      "mode": "ankara_events",
+      "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": false},
+      "enabled": true,
+      "notes": "Official Ankara Büyükşehir Belediyesi culture/events website. HTML event pages are collected for feasibility only; reuse terms require final verification before commercial use."
+    },
+    {
       "id": "afad_event_service",
       "province": "ALL",
       "name": "AFAD Event Service",
