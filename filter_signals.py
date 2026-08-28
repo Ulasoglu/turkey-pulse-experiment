@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 RAW = ROOT / "data" / "raw_signals.jsonl"
 OUT = ROOT / "data" / "filtered_signals.jsonl"
-FILTER_VERSION = "rules-v5-structured-events"
+FILTER_VERSION = "rules-v6-structured-event-freshness"
 
 GENERIC_DROP_TITLES = {"haberler", "haber", "duyurular"}
 HIGH_SIGNAL_TERMS = {"uyarı","sağanak","yağış","fırtına","kuvvetli rüzgâr","kuvvetli rüzgar","aşırı sıcak","sıcaklık","yangın","kapatıldı","kapalı","ulaşım","trafik","yol","cadde","sokak","köprü","tünel","istasyon","metro","tramvay","izban","otobüs","vapur","sefer","altyapı","yenileme","elektrik kesintisi","su kesintisi","doğalgaz","arıza","ücretsiz","indirimli"}
@@ -61,6 +61,8 @@ def classify_structured_event(row, now):
 
     if source_id == "izmir_open_data_events":
         relevant_end = end or start
+        if start < now - timedelta(days=7):
+            return "DROP", "izmir_event_stale_start"
         if relevant_end < now:
             return "DROP", "izmir_event_ended"
         return "KEEP", "structured_izmir_public_event"
