@@ -7,9 +7,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
-INFILE=ROOT/"data"/"filtered_signals.jsonl"; OUTFILE=ROOT/"data"/"map_signals.jsonl"
-ENGINE_VERSION="signal-engine-v4-structured-events"
-STRUCTURED_EVENT_SOURCES={"bursa_open_data_events","izmir_open_data_events"}
+INFILE=ROOT/"data"/"filtered_signals.jsonl"; OUTFILE=ROOT/"data"/"map_signals.jsonl"; MANIFEST=ROOT/"sources.json"
+ENGINE_VERSION="signal-engine-v5-policy-events"
 CATEGORY_RULES=[("WEATHER",{"uyarı","sağanak","yağış","fırtına","rüzgâr","rüzgar","sıcak","sıcaklık"}),("TRAFFIC",{"trafik","ulaşım","yol","cadde","sokak","köprü","tünel","istasyon","metro","tramvay","izban","otobüs","vapur","sefer"}),("UTILITY",{"elektrik kesintisi","su kesintisi","doğalgaz","arıza"}),("EVENT",{"etkinlik","festival","konser","kutlanacak","coşkusu","bayram","sergi","ücretsiz","indirimli"}),("INFRASTRUCTURE",{"altyapı","yenileme","proje","inşaat"})]
 HIGH_RELEVANCE_TERMS={"uyarı","kapatıldı","kesintisi","arıza","trafik","ulaşım","deprem","yangın","sağanak","fırtına","yağış"}
 MEDIUM_RELEVANCE_TERMS={"etkinlik","festival","konser","bayram","ücretsiz","indirimli","yenileme","altyapı","proje"}
@@ -28,16 +27,23 @@ def parse_iso(v):
     if dt.tzinfo is None:dt=dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
 
-def detect_category(row):
+def load_policies():
+    manifest=json.loads(MANIFEST.read_text(encoding="utf-8"))
+    return {s["id"]:s.get("freshness_policy",{}) for s in manifest.get("sources",[])}
+
+def source_is_event(row,policies):
+    return policies.get(text(row.get("source_id")),{}).get("kind")=="event" or bool(row.get("event_start_at"))
+
+def detect_category(row,policies):
     sid=text(row.get("source_id")); title=normalize(row.get("title"))
     if sid=="afad_event_service":return "EARTHQUAKE"
-    if sid in STRUCTURED_EVENT_SOURCES:return "EVENT"
+    if source_is_event(row,policies):return "EVENT"
     for category,terms in CATEGORY_RULES:
         if has_any(title,terms):return category
     return "OTHER"
 
-def detect_relevance(row,category):
-    if text(row.get("source_id")) in STRUCTURED_EVENT_SOURCES:return "MEDIUM"
+def detect_relevance(row,category,policies):
+    if source_is_event(row,policies):return "MEDIUM"
     title=normalize(row.get("title"))
     if category=="EARTHQUAKE":
         try:m=float(row.get("magnitude"))
@@ -47,16 +53,28 @@ def detect_relevance(row,category):
     if has_any(title,MEDIUM_RELEVANCE_TERMS):return "MEDIUM"
     return "MEDIUM" if text(row.get("filter_decision"))=="KEEP" else "LOW"
 
-def freshness(row,category,now):
+def event_freshness(row,now,policy):
+    start=parse_iso(row.get("event_start_at")); end=parse_iso(row.get("event_end_at"))
+    if start is None:return "UNKNOWN",None,None
+    require_not_ended=bool(policy.get("require_not_ended",True))
+    max_started_days=int(policy.get("max_started_days",7))
+    if end is not None and require_not_ended and now>end:
+        return "OLD",max(now-end,timedelta(0)),end
+    if now<start:
+        until=start-now
+        status="NOW" if until<=timedelta(hours=24) else "RECENT"
+        expires=end or (start+timedelta(days=max_started_days))
+        return status,timedelta(0),expires
+    age=max(now-start,timedelta(0))
+    if age>timedelta(days=max_started_days):
+        return "OLD",age,end or (start+timedelta(days=max_started_days))
+    expires=end if end is not None else start+timedelta(days=max_started_days)
+    return "NOW",age,expires
+
+def freshness(row,category,now,policies):
+    sid=text(row.get("source_id")); policy=policies.get(sid,{})
     if category=="EVENT" and row.get("event_start_at"):
-        start=parse_iso(row.get("event_start_at")); end=parse_iso(row.get("event_end_at")) or start
-        if start is None:return "UNKNOWN",None,None
-        if end and now>end:return "OLD",max(now-end,timedelta(0)),end
-        if now<start:
-            until=start-now
-            status="NOW" if until<=timedelta(hours=24) else "RECENT"
-            return status,timedelta(0),end or (start+LIFETIMES[category])
-        return "NOW",max(now-start,timedelta(0)),end or (start+LIFETIMES[category])
+        return event_freshness(row,now,policy)
     occurred=parse_iso(row.get("published_at")) or parse_iso(row.get("collected_at"))
     if occurred is None:return "UNKNOWN",None,None
     age=max(now-occurred,timedelta(0)); expires=occurred+LIFETIMES[category]
@@ -83,9 +101,9 @@ def load_rows():
     return rows,bad
 
 def main():
-    rows,bad=load_rows();now=datetime.now(timezone.utc);results=[];vis=Counter();cats=Counter();rels=Counter();freshs=Counter()
+    rows,bad=load_rows();policies=load_policies();now=datetime.now(timezone.utc);results=[];vis=Counter();cats=Counter();rels=Counter();freshs=Counter()
     for row in rows:
-        cat=detect_category(row);rel=detect_relevance(row,cat);fresh,age,expires=freshness(row,cat,now);decision=decide(row,cat,rel,fresh)
+        cat=detect_category(row,policies);rel=detect_relevance(row,cat,policies);fresh,age,expires=freshness(row,cat,now,policies);decision=decide(row,cat,rel,fresh)
         out=dict(row);out.update(signal_category=cat,signal_relevance=rel,signal_freshness=fresh,signal_age_minutes=round(age.total_seconds()/60,1) if age is not None else None,expires_at=expires.isoformat() if expires else None,map_decision=decision,signal_engine_version=ENGINE_VERSION);results.append(out)
         vis[decision]+=1;cats[cat]+=1;rels[rel]+=1;freshs[fresh]+=1
     OUTFILE.parent.mkdir(parents=True,exist_ok=True)
