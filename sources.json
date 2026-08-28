@@ -48,6 +48,18 @@
       "notes": "Official Ankara Büyükşehir Belediyesi culture/events website. HTML event pages are collected for feasibility only; reuse terms require final verification before commercial use."
     },
     {
+      "id": "konya_bb_events",
+      "province": "Konya",
+      "name": "Konya Büyükşehir Belediyesi Etkinlikler",
+      "source_type": "municipal_official_events_html",
+      "url": "https://www.konya.bel.tr/etkinlik",
+      "rights_status": "reuse_needs_final_check",
+      "mode": "konya_events",
+      "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": false},
+      "enabled": true,
+      "notes": "Official Konya Büyükşehir Belediyesi event listing. Event title/date/detail links are present in server-rendered HTML. Site reuse terms require final verification before commercial use."
+    },
+    {
       "id": "afad_event_service",
       "province": "ALL",
       "name": "AFAD Event Service",
