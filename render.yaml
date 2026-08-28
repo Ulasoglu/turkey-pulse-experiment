@@ -2,7 +2,6 @@ services:
   - type: web
     name: turkey-pulse
     runtime: static
-    plan: free
     buildCommand: echo "Turkey Pulse static PWA - no build step"
     staticPublishPath: ./web
     autoDeployTrigger: commit
