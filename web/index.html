@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f5f0" />
+  <title>Türkiye Pulse</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">TP</div>
+        <div>
+          <strong>Türkiye Pulse</strong>
+          <span>Şu anda nerede ne oluyor?</span>
+        </div>
+      </div>
+      <button id="savedButton" class="icon-button" aria-label="Kaydedilen şehirler">★</button>
+    </header>
+
+    <section class="toolbar">
+      <label class="search-box">
+        <span>⌕</span>
+        <input id="searchInput" type="search" placeholder="Şehir veya gelişme ara" autocomplete="off" />
+      </label>
+      <div class="time-filters" aria-label="Zaman filtresi">
+        <button data-time="now">Şimdi</button>
+        <button data-time="today" class="active">Bugün</button>
+        <button data-time="7d">7 Gün</button>
+      </div>
+      <div id="categoryFilters" class="category-filters"></div>
+    </section>
+
+    <main class="main-layout">
+      <section class="map-wrap">
+        <div id="map" aria-label="Türkiye gelişmeler haritası"></div>
+        <div class="map-status">
+          <span class="live-dot"></span>
+          <span id="statusText">Veriler yükleniyor…</span>
+        </div>
+      </section>
+
+      <aside id="feedPanel" class="feed-panel">
+        <div class="feed-head">
+          <div>
+            <span class="eyebrow">Seçili şehir</span>
+            <h1 id="feedTitle">Türkiye</h1>
+            <p id="feedSubtitle">Güncel gelişmeler</p>
+          </div>
+          <button id="favoriteButton" class="favorite-button" aria-label="Şehri kaydet">☆</button>
+        </div>
+        <div id="feedList" class="feed-list"></div>
+      </aside>
+    </main>
+  </div>
+
+  <template id="feedCardTemplate">
+    <article class="feed-card">
+      <div class="feed-meta">
+        <span class="category-badge"></span>
+        <time></time>
+      </div>
+      <h2></h2>
+      <p class="feed-source"></p>
+      <div class="feed-actions">
+        <button class="show-on-map">Haritada göster</button>
+        <a class="source-link" target="_blank" rel="noopener noreferrer">Orijinali aç</a>
+      </div>
+    </article>
+  </template>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
