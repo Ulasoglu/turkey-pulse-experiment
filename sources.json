@@ -18,6 +18,17 @@
       "notes": "Structured Bursa municipality events endpoint verified via Açık Yeşil CKAN package/resource discovery."
     },
     {
+      "id": "izmir_open_data_events",
+      "province": "İzmir",
+      "name": "İzmir Açık Veri Kültür Sanat Etkinlikleri",
+      "source_type": "municipal_open_data_events",
+      "url": "https://openapi.izmir.bel.tr/api/ibb/kultursanat/etkinlikler",
+      "rights_status": "open_license_verified",
+      "mode": "izmir_events",
+      "enabled": true,
+      "notes": "Official İzmir Büyükşehir Belediyesi open-data API for current culture and arts events; portal states daily updates and an open-data license."
+    },
+    {
       "id": "afad_event_service",
       "province": "ALL",
       "name": "AFAD Event Service",
@@ -54,7 +65,7 @@
   "province_source_status": {
     "İstanbul": {"production_safe_active_sources": 0, "needs_source_research": true},
     "Ankara": {"production_safe_active_sources": 0, "needs_source_research": true},
-    "İzmir": {"production_safe_active_sources": 0, "needs_source_research": true},
+    "İzmir": {"production_safe_active_sources": 1, "needs_source_research": true},
     "Bursa": {"production_safe_active_sources": 1, "needs_source_research": true},
     "Antalya": {"production_safe_active_sources": 0, "needs_source_research": true},
     "Konya": {"production_safe_active_sources": 0, "needs_source_research": true},
