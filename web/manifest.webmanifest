@@ -1,0 +1,11 @@
+{
+  "name": "Türkiye Pulse",
+  "short_name": "Pulse",
+  "description": "Türkiye'de şu anda nerede ne oluyor?",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f5f0",
+  "theme_color": "#f7f5f0",
+  "lang": "tr",
+  "icons": []
+}
