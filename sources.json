@@ -36,11 +36,7 @@
       "name": "ABB Kültür Sanat Etkinlikleri",
       "source_type": "municipal_official_events_html",
       "url": "https://kultursanat.ankara.bel.tr/",
-      "discovery_urls": [
-        "https://kultursanat.ankara.bel.tr/",
-        "https://kultursanat.ankara.bel.tr/ankara-etkinlikleri",
-        "https://kultursanat.ankara.bel.tr/aylik-etkinlik-takvimi"
-      ],
+      "discovery_urls": ["https://kultursanat.ankara.bel.tr/", "https://kultursanat.ankara.bel.tr/ankara-etkinlikleri", "https://kultursanat.ankara.bel.tr/aylik-etkinlik-takvimi"],
       "rights_status": "reuse_needs_final_check",
       "mode": "ankara_events",
       "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": false},
@@ -58,6 +54,18 @@
       "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": false},
       "enabled": true,
       "notes": "Official Konya Büyükşehir Belediyesi event listing. Event title/date/detail links are present in server-rendered HTML. Site reuse terms require final verification before commercial use."
+    },
+    {
+      "id": "samsun_bb_events",
+      "province": "Samsun",
+      "name": "Samsun Büyükşehir Belediyesi Etkinlikler",
+      "source_type": "municipal_official_events_html",
+      "url": "https://samsun.bel.tr/guncel/etkinlikler",
+      "rights_status": "reuse_needs_final_check",
+      "mode": "samsun_events",
+      "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": false},
+      "enabled": true,
+      "notes": "Official Samsun Büyükşehir Belediyesi event listing. Server-rendered HTML exposes event date, time, title, location and direct detail links. Site states Her Hakkı Saklıdır; reuse requires final verification before commercial use."
     },
     {
       "id": "afad_event_service",
