@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 ROOT = Path(__file__).resolve().parent
 MANIFEST = ROOT / "sources.json"
 OUT = ROOT / "data" / "raw_signals.jsonl"
-HEADERS = {"User-Agent": "TurkeyPulseFeasibilityExperiment/0.4 (+non-commercial feasibility probe)"}
+HEADERS = {"User-Agent": "TurkeyPulseFeasibilityExperiment/0.5 (+non-commercial feasibility probe)"}
 
 
 def now_iso():
@@ -89,6 +89,20 @@ def parse_bursa_date(value):
     return None
 
 
+def parse_izmir_date(value):
+    if not value:
+        return None
+    raw = str(value).strip()
+    try:
+        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        # İzmir's API returns local timestamps without an offset.
+        dt = dt.replace(tzinfo=timezone(timedelta(hours=3)))
+    return dt.astimezone(timezone.utc)
+
+
 def collect_bursa_events(source):
     collected_at = now_iso()
     known = seen_hashes(source["id"])
@@ -108,18 +122,13 @@ def collect_bursa_events(source):
         for item in records:
             if not isinstance(item, dict):
                 continue
-
             title = str(item.get("adi") or "").strip()
             start = parse_bursa_date(item.get("tarih_baslama"))
             end = parse_bursa_date(item.get("tarih_bitis"))
             relevant_end = end or start
-
             if not title or not start or not relevant_end:
                 continue
 
-            # Bursa's feed can contain very old records whose end date still
-            # makes them look active. Keep future events, plus genuinely
-            # ongoing events that started no more than 7 days ago.
             is_future = start >= now
             is_recently_active = active_lookback <= start < now and relevant_end >= now
             if not (is_future or is_recently_active):
@@ -138,15 +147,7 @@ def collect_bursa_events(source):
             if content_hash in known:
                 continue
 
-            row = base_row(
-                source,
-                collected_at,
-                r.status_code,
-                content_hash,
-                title,
-                start.isoformat(),
-                item.get("link") or source["url"],
-            )
+            row = base_row(source, collected_at, r.status_code, content_hash, title, start.isoformat(), item.get("link") or source["url"])
             row.update({
                 "event_id": item.get("id"),
                 "event_start_at": start.isoformat(),
@@ -162,13 +163,78 @@ def collect_bursa_events(source):
             new_count += 1
             print("NEW BURSA EVENT", start.isoformat(), title)
 
-        print(
-            f"Bursa events returned: {len(records)} "
-            f"eligible={eligible} stale_skipped={stale_skipped} new={new_count}"
-        )
+        print(f"Bursa events returned: {len(records)} eligible={eligible} stale_skipped={stale_skipped} new={new_count}")
     except Exception as exc:
         error_row(source, exc)
         print("ERROR BURSA EVENTS", exc)
+
+
+def collect_izmir_events(source):
+    collected_at = now_iso()
+    known = seen_hashes(source["id"])
+    try:
+        r = requests.get(source["url"], headers=HEADERS, timeout=30)
+        r.raise_for_status()
+        records = r.json()
+        if not isinstance(records, list):
+            raise ValueError("Izmir events response is not a JSON list")
+
+        now = datetime.now(timezone.utc)
+        eligible = 0
+        stale_skipped = 0
+        new_count = 0
+
+        for item in records:
+            if not isinstance(item, dict):
+                continue
+
+            title = str(item.get("Adi") or "").strip()
+            start = parse_izmir_date(item.get("EtkinlikBaslamaTarihi"))
+            end = parse_izmir_date(item.get("EtkinlikBitisTarihi")) or start
+            if not title or not start or not end:
+                continue
+
+            # This official current-events API has reliable end dates. Keep
+            # future events and genuinely ongoing events, including long-running exhibitions.
+            if end < now:
+                stale_skipped += 1
+                continue
+
+            eligible += 1
+            identity = {
+                "id": item.get("Id"),
+                "title": title,
+                "start": item.get("EtkinlikBaslamaTarihi"),
+                "end": item.get("EtkinlikBitisTarihi"),
+                "venue": item.get("EtkinlikMerkezi"),
+            }
+            content_hash = sha256_json(identity)
+            if content_hash in known:
+                continue
+
+            row = base_row(source, collected_at, r.status_code, content_hash, title, start.isoformat(), source["url"])
+            row.update({
+                "event_id": item.get("Id"),
+                "event_start_at": start.isoformat(),
+                "event_end_at": end.isoformat(),
+                "event_category": item.get("Tur"),
+                "venue": item.get("EtkinlikMerkezi"),
+                "image_url": item.get("Resim") or item.get("KucukAfis"),
+                "is_free": item.get("UcretsizMi"),
+                "ticket_url": item.get("BiletSatisLinki"),
+                "event_slug": item.get("EtkinlikUrl"),
+                "raw_summary": "izmir_open_data_event",
+                "raw_event": item,
+            })
+            append(row)
+            known.add(content_hash)
+            new_count += 1
+            print("NEW IZMIR EVENT", start.isoformat(), title)
+
+        print(f"Izmir events returned: {len(records)} eligible={eligible} stale_skipped={stale_skipped} new={new_count}")
+    except Exception as exc:
+        error_row(source, exc)
+        print("ERROR IZMIR EVENTS", exc)
 
 
 def collect_afad_events(source):
@@ -199,12 +265,7 @@ def collect_afad_events(source):
             magnitude = event.get("magnitude")
             location = event.get("location")
             magnitude_type = event.get("type")
-            title = " - ".join(
-                x for x in [
-                    f"{magnitude_type or 'M'} {magnitude}" if magnitude is not None else None,
-                    location,
-                ] if x
-            ) or "AFAD earthquake event"
+            title = " - ".join(x for x in [f"{magnitude_type or 'M'} {magnitude}" if magnitude is not None else None, location] if x) or "AFAD earthquake event"
             row = base_row(source, collected_at, r.status_code, content_hash, title, event.get("date"))
             row.update({
                 "province": event.get("province") or "UNKNOWN",
@@ -214,13 +275,7 @@ def collect_afad_events(source):
                 "magnitude_type": magnitude_type,
                 "depth_km": event.get("depth"),
                 "event_id": event.get("eventID"),
-                "raw_summary": "; ".join(
-                    x for x in [
-                        f"province={event.get('province')}" if event.get("province") else None,
-                        f"district={event.get('district')}" if event.get("district") else None,
-                        f"depth_km={event.get('depth')}" if event.get("depth") is not None else None,
-                    ] if x
-                ),
+                "raw_summary": "; ".join(x for x in [f"province={event.get('province')}" if event.get("province") else None, f"district={event.get('district')}" if event.get("district") else None, f"depth_km={event.get('depth')}" if event.get("depth") is not None else None] if x),
                 "raw_event": event,
             })
             append(row)
@@ -234,11 +289,7 @@ def collect_afad_events(source):
 
 def parse_date_tr(value):
     text = " ".join(str(value or "").split())
-    months = {
-        "ocak": 1, "şubat": 2, "mart": 3, "nisan": 4,
-        "mayıs": 5, "haziran": 6, "temmuz": 7, "ağustos": 8,
-        "eylül": 9, "ekim": 10, "kasım": 11, "aralık": 12,
-    }
+    months = {"ocak":1,"şubat":2,"mart":3,"nisan":4,"mayıs":5,"haziran":6,"temmuz":7,"ağustos":8,"eylül":9,"ekim":10,"kasım":11,"aralık":12}
     m = re.search(r"\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b", text)
     if m:
         try:
@@ -319,12 +370,7 @@ def collect_municipal_feed(source):
                         continue
                 except ValueError:
                     pass
-            content_hash = sha256_json({
-                "source": source["id"],
-                "url": article_url,
-                "title": title,
-                "published_at": published_at,
-            })
+            content_hash = sha256_json({"source": source["id"], "url": article_url, "title": title, "published_at": published_at})
             if content_hash in known:
                 continue
             row = base_row(source, collected_at, r.status_code, content_hash, title, published_at, article_url)
@@ -345,6 +391,8 @@ def main():
         mode = source.get("mode")
         if mode == "bursa_events":
             collect_bursa_events(source)
+        elif mode == "izmir_events":
+            collect_izmir_events(source)
         elif mode == "afad_events":
             collect_afad_events(source)
         elif mode == "municipal_feed":
