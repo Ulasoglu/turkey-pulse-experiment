@@ -14,6 +14,7 @@
       "url": "https://bapi.bursa.bel.tr/apigateway/acikveri/etkinlik",
       "rights_status": "open_license_verified",
       "mode": "bursa_events",
+      "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": true},
       "enabled": true,
       "notes": "Structured Bursa municipality events endpoint verified via Açık Yeşil CKAN package/resource discovery."
     },
@@ -25,6 +26,7 @@
       "url": "https://openapi.izmir.bel.tr/api/ibb/kultursanat/etkinlikler",
       "rights_status": "open_license_verified",
       "mode": "izmir_events",
+      "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": true},
       "enabled": true,
       "notes": "Official İzmir Büyükşehir Belediyesi open-data API for current culture and arts events; portal states daily updates and an open-data license."
     },
@@ -36,6 +38,7 @@
       "url": "https://deprem.afad.gov.tr/apiv2/event/filter",
       "rights_status": "reuse_needs_final_check",
       "mode": "afad_events",
+      "freshness_policy": {"kind": "earthquake", "lookback_hours": 24},
       "enabled": true,
       "notes": "Official AFAD Event Web Service. Collector queries recent earthquake events as structured JSON. Reuse terms still require final verification before commercial use."
     },
@@ -47,6 +50,7 @@
       "url": "https://akom.ibb.istanbul/Haberler/",
       "rights_status": "reuse_needs_final_check",
       "mode": "municipal_feed",
+      "freshness_policy": {"kind": "news", "max_age_days": 7},
       "enabled": true,
       "notes": "Official İBB AKOM news archive."
     },
@@ -58,6 +62,7 @@
       "url": "https://www.izmir.bel.tr/tr/HaberArsivi/21976?page=1",
       "rights_status": "reuse_needs_final_check",
       "mode": "municipal_feed",
+      "freshness_policy": {"kind": "news", "max_age_days": 7},
       "enabled": true,
       "notes": "Official İzmir Büyükşehir Belediyesi news archive."
     }
