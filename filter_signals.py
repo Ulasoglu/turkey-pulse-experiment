@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 RAW = ROOT / "data" / "raw_signals.jsonl"
 OUT = ROOT / "data" / "filtered_signals.jsonl"
-FILTER_VERSION = "rules-v3-bursa"
+FILTER_VERSION = "rules-v4-bursa-freshness"
 
 GENERIC_DROP_TITLES = {"haberler", "haber", "duyurular"}
 HIGH_SIGNAL_TERMS = {"uyarı","sağanak","yağış","fırtına","kuvvetli rüzgâr","kuvvetli rüzgar","aşırı sıcak","sıcaklık","yangın","kapatıldı","kapalı","ulaşım","trafik","yol","cadde","sokak","köprü","tünel","istasyon","metro","tramvay","izban","otobüs","vapur","sefer","altyapı","yenileme","elektrik kesintisi","su kesintisi","doğalgaz","arıza","ücretsiz","indirimli"}
@@ -29,12 +30,31 @@ def contains_term(haystack, term):
 def term_hits(title_n, terms): return sorted(term for term in terms if contains_term(title_n, term))
 
 
-def classify(row):
+def parse_iso(value):
+    raw = text(value)
+    if not raw:
+        return None
+    try:
+        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def classify(row, now=None):
+    now = now or datetime.now(timezone.utc)
     source_id = text(row.get("source_id")); title = text(row.get("title")); title_n = normalize(title); summary = normalize(row.get("raw_summary"))
     if summary.startswith("error:"): return "DROP", "collector_error"
     if source_id == "bursa_acik_yesil_catalog": return "DROP", "legacy_page_watch_not_event"
     if source_id == "bursa_open_data_events":
         if not title or not row.get("event_start_at"): return "DROP", "bursa_event_missing_core_fields"
+        start = parse_iso(row.get("event_start_at"))
+        end = parse_iso(row.get("event_end_at"))
+        if start is None: return "DROP", "bursa_event_invalid_start"
+        if start < now - timedelta(days=7): return "DROP", "bursa_event_stale_start"
+        if end is not None and end < now: return "DROP", "bursa_event_ended"
         return "KEEP", "structured_bursa_public_event"
     if source_id == "afad_event_service" and row.get("event_id") is None: return "DROP", "afad_non_event_record"
     if source_id == "afad_event_service":
@@ -72,9 +92,9 @@ def duplicate_key(row):
 
 
 def main():
-    rows,bad=load_rows(); results=[]; counts=Counter(); source_counts=Counter(); seen=set()
+    rows,bad=load_rows(); results=[]; counts=Counter(); source_counts=Counter(); seen=set(); now=datetime.now(timezone.utc)
     for row in rows:
-        decision,reason=classify(row)
+        decision,reason=classify(row, now)
         if decision in {"KEEP","MAYBE"}:
             key=duplicate_key(row)
             if key is not None:
