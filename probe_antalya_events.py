@@ -7,8 +7,9 @@ import requests
 from bs4 import BeautifulSoup
 
 URL = "https://www.antalya.bel.tr/tr/etkinlikler"
+COLLECTION_ID = "6c75f6c0-fc5d-4d4f-9ae8-e96447fe893b"
 HEADERS = {
-    "User-Agent": "TurkeyPulseFeasibilityExperiment/1.1 (+non-commercial feasibility probe)",
+    "User-Agent": "TurkeyPulseFeasibilityExperiment/1.2 (+non-commercial feasibility probe)",
     "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.8",
 }
 
@@ -20,11 +21,15 @@ def get(url):
     return r
 
 
+def compact(value, limit=1400):
+    return " ".join(value.split())[:limit]
+
+
 def endpoint_hints(body, base):
     hints = set()
     patterns = [
         r"https?://[^\"'\s<>]+",
-        r"/[A-Za-z0-9_./?=&%{}:-]*(?:api|event|etkinlik|content|service|ajax|list|search|get|page)[A-Za-z0-9_./?=&%{}:-]*",
+        r"/[A-Za-z0-9_./?=&%{}:-]*(?:api|collection|content|event|etkinlik|service|ajax|list|search|get|page)[A-Za-z0-9_./?=&%{}:-]*",
     ]
     for pattern in patterns:
         for match in re.findall(pattern, body, re.I):
@@ -32,24 +37,18 @@ def endpoint_hints(body, base):
     return sorted(hints)
 
 
-def print_interesting_lines(label, body):
-    tokens = [
-        "{{item.", "custominclude", "startdate", "enddate", "refetkinliktipi",
-        "axios", "fetch(", "$.ajax", "$http", "xmlhttprequest", "api/", "/api",
-        "etkinlik", "event", "getcontent", "getlist", "contentlist", "search"
-    ]
+def print_matches(label, body, tokens, max_count=120):
     seen = set()
     count = 0
     for raw in body.splitlines():
-        compact = " ".join(raw.split())
-        low = compact.casefold()
-        if any(token.casefold() in low for token in tokens):
-            if compact and compact not in seen:
-                seen.add(compact)
-                print(label, compact[:900])
-                count += 1
-                if count >= 80:
-                    break
+        line = compact(raw)
+        low = line.casefold()
+        if line and any(token.casefold() in low for token in tokens) and line not in seen:
+            seen.add(line)
+            print(label, line)
+            count += 1
+            if count >= max_count:
+                break
     print(label, "COUNT", count)
 
 
@@ -59,37 +58,62 @@ def inspect_script(url):
     except Exception as exc:
         print("SCRIPT ERROR", url, exc)
         return
-    compact = " ".join(r.text.split())
-    print("SCRIPT", url)
-    for token in ["etkinlik", "StartDate", "custominclude", "baslik", "refetkinliktipi", "$http", "axios", "fetch(", "$.ajax", "api/"]:
-        if token.casefold() in compact.casefold():
-            print("  HAS", token)
-    hints = endpoint_hints(r.text, r.url)
-    print("  ENDPOINT HINTS", len(hints))
-    for hint in hints[:100]:
-        print("  HINT", hint)
-    print_interesting_lines("  SCRIPT_LINE", r.text)
+
+    body = r.text
+    low = body.casefold()
+    interesting = [
+        COLLECTION_ID.casefold(), "data-collection", "collectionid", "collection-id",
+        "custominclude", "startdate", "finisbroadcastertime", "pagesize", "page-size",
+        "axios", "fetch(", "$.ajax", "$http", "xmlhttprequest", "/api", "api/",
+    ]
+    if not any(token in low for token in interesting):
+        return
+
+    print("=== INTERESTING SCRIPT", url, "===")
+    for token in interesting:
+        if token in low:
+            print("HAS", token)
+    print_matches("SCRIPT_LINE", body, interesting)
+    for hint in endpoint_hints(body, r.url)[:150]:
+        print("SCRIPT_HINT", hint)
 
 
 def main():
-    print("=== ANTALYA EVENTS DEEP PROBE ===")
+    print("=== ANTALYA COLLECTION LOADER PROBE ===")
+    print("TARGET COLLECTION", COLLECTION_ID)
     r = get(URL)
     soup = BeautifulSoup(r.text, "html.parser")
 
-    print("TITLE", soup.title.get_text(" ", strip=True) if soup.title else "")
-    print("PAGE HAS TEMPLATE TOKENS", "{{item." in r.text)
-    print_interesting_lines("PAGE_LINE", r.text)
+    tokens = [
+        COLLECTION_ID, "data-collection", "collectionid", "collection-id", "custominclude",
+        "StartDate", "finisBroadcasterTime", "pagesize", "page-size", "sort", "filter",
+    ]
+    print_matches("PAGE_COLLECTION", r.text, tokens)
 
-    inline = [s.get_text("\n", strip=False) for s in soup.find_all("script") if not s.get("src")]
-    print("INLINE SCRIPTS", len(inline))
-    for idx, body in enumerate(inline):
+    # Print the actual DOM nodes around collection-related attributes/classes.
+    dom_count = 0
+    for tag in soup.find_all(True):
+        attrs = " ".join(f"{k}={v}" for k, v in tag.attrs.items())
+        text = tag.get_text(" ", strip=True)
+        hay = f"{tag.name} {attrs} {text}".casefold()
+        if COLLECTION_ID.casefold() in hay or "data-collection" in hay or "custominclude" in hay:
+            print("COLLECTION_DOM", compact(str(tag), 2200))
+            dom_count += 1
+            if dom_count >= 30:
+                break
+    print("COLLECTION_DOM COUNT", dom_count)
+
+    # Inline scripts may initialize the generic loader with the collection metadata.
+    for idx, script in enumerate(soup.find_all("script")):
+        if script.get("src"):
+            continue
+        body = script.get_text("\n", strip=False)
         low = body.casefold()
-        if any(token in low for token in ["etkinlik", "custominclude", "startdate", "axios", "fetch(", "$.ajax", "$http", "api/"]):
-            print("INLINE_SCRIPT", idx, "bytes", len(body.encode("utf-8")))
-            print_interesting_lines("  INLINE_LINE", body)
-            hints = endpoint_hints(body, r.url)
-            for hint in hints[:100]:
-                print("  INLINE_HINT", hint)
+        if any(t.casefold() in low for t in tokens + ["axios", "fetch(", "$.ajax", "$http"]):
+            print("=== INLINE", idx, "===")
+            print_matches("INLINE_LINE", body, tokens + ["axios", "fetch(", "$.ajax", "$http", "/api", "api/"])
+            for hint in endpoint_hints(body, r.url)[:100]:
+                print("INLINE_HINT", hint)
 
     scripts = []
     seen = set()
@@ -98,21 +122,12 @@ def main():
         if absolute not in seen:
             seen.add(absolute)
             scripts.append(absolute)
+
     print("EXTERNAL SCRIPTS", len(scripts))
     for script in scripts:
-        print("SCRIPT_URL", script)
-
-    # Inspect first-party Antalya scripts even when they are hosted on library/mcmsmedia subdomains.
-    candidates = []
-    for s in scripts:
-        host = urlparse(s).netloc.casefold()
-        low = s.casefold()
-        if host.endswith("antalya.bel.tr") and any(x in low for x in ["site", "panel", "app", "main", "bundle", "script", "js"]):
-            candidates.append(s)
-
-    print("FIRST_PARTY SCRIPT CANDIDATES", len(candidates))
-    for script in candidates[-20:]:
-        inspect_script(script)
+        host = urlparse(script).netloc.casefold()
+        if host.endswith("antalya.bel.tr"):
+            inspect_script(script)
 
 
 if __name__ == "__main__":
