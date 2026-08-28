@@ -9,7 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 RAW = ROOT / "data" / "raw_signals.jsonl"
 OUT = ROOT / "data" / "filtered_signals.jsonl"
-FILTER_VERSION = "rules-v6-structured-event-freshness"
+MANIFEST = ROOT / "sources.json"
+FILTER_VERSION = "rules-v7-central-freshness"
 
 GENERIC_DROP_TITLES = {"haberler", "haber", "duyurular"}
 HIGH_SIGNAL_TERMS = {"uyarı","sağanak","yağış","fırtına","kuvvetli rüzgâr","kuvvetli rüzgar","aşırı sıcak","sıcaklık","yangın","kapatıldı","kapalı","ulaşım","trafik","yol","cadde","sokak","köprü","tünel","istasyon","metro","tramvay","izban","otobüs","vapur","sefer","altyapı","yenileme","elektrik kesintisi","su kesintisi","doğalgaz","arıza","ücretsiz","indirimli"}
@@ -32,51 +33,49 @@ def term_hits(title_n, terms): return sorted(term for term in terms if contains_
 
 def parse_iso(value):
     raw = text(value)
-    if not raw:
-        return None
-    try:
-        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+    if not raw: return None
+    try: dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError: return None
+    if dt.tzinfo is None: dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
 
 
-def classify_structured_event(row, now):
-    source_id = text(row.get("source_id"))
-    title = text(row.get("title"))
-    start = parse_iso(row.get("event_start_at"))
-    end = parse_iso(row.get("event_end_at"))
-
-    if not title or start is None:
-        return "DROP", "structured_event_missing_core_fields"
-
-    if source_id == "bursa_open_data_events":
-        if start < now - timedelta(days=7):
-            return "DROP", "bursa_event_stale_start"
-        if end is not None and end < now:
-            return "DROP", "bursa_event_ended"
-        return "KEEP", "structured_bursa_public_event"
-
-    if source_id == "izmir_open_data_events":
-        relevant_end = end or start
-        if start < now - timedelta(days=7):
-            return "DROP", "izmir_event_stale_start"
-        if relevant_end < now:
-            return "DROP", "izmir_event_ended"
-        return "KEEP", "structured_izmir_public_event"
-
-    return "MAYBE", "unknown_structured_event_source"
+def load_policies():
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    return {s["id"]: s.get("freshness_policy", {}) for s in manifest.get("sources", [])}
 
 
-def classify(row, now=None):
+def freshness_decision(row, policy, now):
+    kind = policy.get("kind")
+    if not kind: return None
+
+    if kind == "event":
+        start = parse_iso(row.get("event_start_at")); end = parse_iso(row.get("event_end_at"))
+        if start is None: return "DROP", "freshness_event_missing_start"
+        max_started_days = int(policy.get("max_started_days", 7))
+        if start < now - timedelta(days=max_started_days): return "DROP", "freshness_event_stale_start"
+        if policy.get("require_not_ended", True) and (end or start) < now: return "DROP", "freshness_event_ended"
+        return "KEEP", "freshness_event_valid"
+
+    if kind == "news":
+        published = parse_iso(row.get("published_at"))
+        if published is None: return None
+        max_age_days = int(policy.get("max_age_days", 7))
+        if published < now - timedelta(days=max_age_days): return "DROP", "freshness_news_too_old"
+        return None
+
+    return None
+
+
+def classify(row, policies, now=None):
     now = now or datetime.now(timezone.utc)
     source_id = text(row.get("source_id")); title = text(row.get("title")); title_n = normalize(title); summary = normalize(row.get("raw_summary"))
     if summary.startswith("error:"): return "DROP", "collector_error"
     if source_id == "bursa_acik_yesil_catalog": return "DROP", "legacy_page_watch_not_event"
-    if source_id in {"bursa_open_data_events", "izmir_open_data_events"}:
-        return classify_structured_event(row, now)
+
+    fresh = freshness_decision(row, policies.get(source_id, {}), now)
+    if fresh is not None: return fresh
+
     if source_id == "afad_event_service" and row.get("event_id") is None: return "DROP", "afad_non_event_record"
     if source_id == "afad_event_service":
         try: magnitude = float(row.get("magnitude"))
@@ -113,9 +112,9 @@ def duplicate_key(row):
 
 
 def main():
-    rows,bad=load_rows(); results=[]; counts=Counter(); source_counts=Counter(); seen=set(); now=datetime.now(timezone.utc)
+    rows,bad=load_rows(); policies=load_policies(); results=[]; counts=Counter(); source_counts=Counter(); seen=set(); now=datetime.now(timezone.utc)
     for row in rows:
-        decision,reason=classify(row, now)
+        decision,reason=classify(row, policies, now)
         if decision in {"KEEP","MAYBE"}:
             key=duplicate_key(row)
             if key is not None:
