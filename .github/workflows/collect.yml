@@ -40,7 +40,7 @@ jobs:
         run: python probe_antalya_events.py
 
       - name: Run collector
-        run: python collector.py
+        run: python -u run_collector_guarded.py
 
       - name: Filter signals
         run: python filter_signals.py
