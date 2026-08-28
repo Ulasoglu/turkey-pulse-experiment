@@ -1,0 +1,53 @@
+/* Mobile polish pass — loaded after styles.css */
+@media (max-width:820px){
+  .product-shell{grid-template-rows:58px minmax(0,1fr) 56px}
+  .mobile-header{padding:0 18px}
+  .mobile-brand strong{font-size:14px}
+
+  .map-stage{overflow:hidden}
+  #map{height:100%;min-height:0}
+  .map-status{top:12px;left:12px;padding:6px 9px}
+
+  /* Keep the map dominant while the sheet is resting. */
+  .mobile-sheet{
+    bottom:56px;
+    height:min(62dvh,560px);
+    border-radius:22px 22px 0 0;
+    transform:translateY(calc(100% - 148px));
+    box-shadow:0 -8px 28px rgba(26,43,53,.10);
+    overscroll-behavior:contain;
+  }
+  .mobile-sheet.open{transform:translateY(0)}
+  .sheet-handle{height:18px}
+  .sheet-handle span{width:36px;height:4px}
+
+  .mobile-time-filters{gap:8px;padding:2px 14px 8px}
+  .mobile-time-filters button{height:32px;border-radius:9px;font-size:9px}
+  .mobile-categories{height:54px;padding:2px 14px 7px;gap:13px}
+  .mobile-category{min-width:38px;gap:3px}
+  .mobile-category .category-icon{width:24px;height:24px}
+
+  .mobile-feed-head{height:48px;padding:9px 16px 6px;border-top:1px solid #f1f2f0}
+  .mobile-feed-head h2{font-size:11px}
+  .mobile-feed-list{
+    height:calc(100% - 152px);
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    padding:0 16px 18px;
+    scroll-padding-top:8px;
+  }
+  .mobile-feed-list .feed-card{padding:11px 0}
+
+  .mobile-bottom-nav{height:56px}
+
+  /* Slightly quieter markers so the map reads first. */
+  .pulse-marker{width:30px;height:30px;font-size:11px;border-width:2.5px;box-shadow:0 4px 10px rgba(25,44,55,.18)}
+  .pulse-marker.high{box-shadow:0 0 0 3px rgba(238,52,59,.16),0 4px 10px rgba(25,44,55,.18)}
+  .province-label{font-size:7px;color:#31444b}
+}
+
+@media (max-width:390px){
+  .mobile-sheet{transform:translateY(calc(100% - 142px))}
+  .mobile-categories{gap:10px}
+}
