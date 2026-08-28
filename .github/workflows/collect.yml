@@ -35,6 +35,10 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Probe Ankara venue markup
+        continue-on-error: true
+        run: python probe_ankara_events.py
+
       - name: Run collector
         run: python collector.py
 
