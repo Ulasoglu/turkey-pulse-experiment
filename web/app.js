@@ -1,36 +1,423 @@
-const CATEGORY_LABELS = {
-  EVENT: "Etkinlik", EARTHQUAKE: "Deprem", WEATHER: "Hava", TRAFFIC: "Trafik", INFRASTRUCTURE: "Altyapı", OTHER: "Yerel",
+const CATEGORY_META = {
+  ALL: { label: "Tümü", icon: "••", css: "all" },
+  EARTHQUAKE: { label: "Deprem", icon: "✦", css: "earthquake" },
+  WEATHER: { label: "Hava Durumu", short: "Hava", icon: "⌁", css: "weather" },
+  TRAFFIC: { label: "Trafik", icon: "▰", css: "traffic" },
+  INFRASTRUCTURE: { label: "Altyapı", icon: "⌂", css: "infrastructure" },
+  EVENT: { label: "Etkinlik", icon: "▣", css: "event" },
+  OTHER: { label: "Yerel Gelişmeler", short: "Yerel", icon: "●", css: "other" },
 };
-const PROVINCE_CENTERS = {
+
+const GEOJSON_URL = "https://raw.githubusercontent.com/cihadturhan/tr-geojson/master/geo/tr-cities-utf8.json";
+const FALLBACK_BOUNDS = L.latLngBounds([35.7, 25.5], [42.2, 44.9]);
+const FALLBACK_CENTERS = {
   İstanbul:[41.0082,28.9784], Ankara:[39.9334,32.8597], İzmir:[38.4237,27.1428], Bursa:[40.1885,29.061], Konya:[37.8746,32.4932], Samsun:[41.2867,36.33], Antalya:[36.8969,30.7133], Çorum:[40.5506,34.9556], Bayburt:[40.2552,40.2249], Balıkesir:[39.6484,27.8826], Malatya:[38.3552,38.3095], Manisa:[38.6191,27.4289], Denizli:[37.7765,29.0864], Elazığ:[38.681,39.2264], Adana:[36.9914,35.3308], Gaziantep:[37.0662,37.3833], Diyarbakır:[37.9144,40.2306], Trabzon:[41.0015,39.7178], Erzurum:[39.9043,41.2679], Van:[38.4891,43.4089]
 };
-const TURKEY_BOUNDS = L.latLngBounds([35.55,25.4],[42.35,45.2]);
-let signals=[], selectedProvince=null, selectedTime="today", selectedCategory="ALL", map, markersLayer;
-let favorites=new Set(JSON.parse(localStorage.getItem("tp:favorites")||"[]"));
-const feedPanel=document.getElementById("feedPanel"), feedTitle=document.getElementById("feedTitle"), feedSubtitle=document.getElementById("feedSubtitle"), feedList=document.getElementById("feedList"), favoriteButton=document.getElementById("favoriteButton"), statusText=document.getElementById("statusText"), searchInput=document.getElementById("searchInput"), categoryFilters=document.getElementById("categoryFilters"), template=document.getElementById("feedCardTemplate");
-function initMap(){
-  map=L.map("map",{zoomControl:false,minZoom:5,maxZoom:12,maxBounds:TURKEY_BOUNDS,maxBoundsViscosity:1,zoomSnap:.25});
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap",bounds:TURKEY_BOUNDS,noWrap:true}).addTo(map);
-  L.control.zoom({position:"bottomright"}).addTo(map);
-  map.fitBounds(TURKEY_BOUNDS,{padding:[8,8]});
-  markersLayer=L.layerGroup().addTo(map);
+
+let signals = [];
+let selectedProvince = null;
+let selectedTime = "today";
+let selectedCategory = "ALL";
+let map;
+let provinceLayer;
+let markersLayer;
+let labelsLayer;
+let turkeyBounds = FALLBACK_BOUNDS;
+let provinceCenters = { ...FALLBACK_CENTERS };
+let provinceLayers = new Map();
+let favorites = new Set(JSON.parse(localStorage.getItem("tp:favorites") || "[]"));
+
+const el = (id) => document.getElementById(id);
+const searchInput = el("searchInput");
+const statusText = el("statusText");
+const desktopFeedList = el("desktopFeedList");
+const mobileFeedList = el("mobileFeedList");
+const feedTitle = el("feedTitle");
+const feedSubtitle = el("feedSubtitle");
+const mobileFeedTitle = el("mobileFeedTitle");
+const mobileFeedSubtitle = el("mobileFeedSubtitle");
+const favoriteButton = el("favoriteButton");
+const mobileFavoriteButton = el("mobileFavoriteButton");
+const mobileSheet = el("mobileSheet");
+const template = el("feedCardTemplate");
+
+function normalizeProvinceName(name) {
+  if (!name) return null;
+  const aliases = { Istanbul: "İstanbul", Izmir: "İzmir", Mugla: "Muğla", Sanliurfa: "Şanlıurfa", Kirikkale: "Kırıkkale", Kirklareli: "Kırklareli", Kirsehir: "Kırşehir", Diyarbakir: "Diyarbakır", Eskisehir: "Eskişehir", Gumushane: "Gümüşhane", Canakkale: "Çanakkale", Cankiri: "Çankırı", Corum: "Çorum", Agri: "Ağrı", Igdir: "Iğdır", Sirnak: "Şırnak", Usak: "Uşak" };
+  return aliases[name] || name;
 }
-function parseDate(v){if(!v)return null;const d=new Date(v);return Number.isNaN(d.getTime())?null:d;}
-function passesTime(s){const d=parseDate(s.published_at),n=new Date();if(selectedTime==="now")return s.freshness==="NOW";if(!d)return selectedTime==="7d";if(selectedTime==="today")return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();const a=new Date(n-7*864e5),b=new Date(n.getTime()+7*864e5);return d>=a&&d<=b;}
-function visibleSignals(){const q=searchInput.value.trim().toLocaleLowerCase("tr-TR");return signals.filter(s=>passesTime(s)&&(selectedCategory==="ALL"||s.category===selectedCategory)&&(!selectedProvince||s.province===selectedProvince)&&(!q||`${s.province||""} ${s.title||""}`.toLocaleLowerCase("tr-TR").includes(q)));}
-function provincePosition(s){return Number.isFinite(s.latitude)&&Number.isFinite(s.longitude)?[s.latitude,s.longitude]:PROVINCE_CENTERS[s.province]||null;}
-function markerClass(c){return(c||"OTHER").toLowerCase();}
-function renderMarkers(){markersLayer.clearLayers();const filtered=visibleSignals(),groups=new Map();for(const s of filtered){const pos=provincePosition(s);if(!pos)continue;const precise=Number.isFinite(s.latitude)&&Number.isFinite(s.longitude),key=precise?`signal:${s.id}`:`province:${s.province}:${s.category}`;if(!groups.has(key))groups.set(key,{signals:[],pos});groups.get(key).signals.push(s);}for(const g of groups.values()){const first=g.signals[0],count=g.signals.reduce((a,i)=>a+(i.signal_count||1),0),icon=L.divIcon({className:"pulse-marker",html:`<div class="pulse-dot ${markerClass(first.category)}"><span>${count}</span></div>`,iconSize:[42,42],iconAnchor:[21,21]});L.marker(g.pos,{icon}).addTo(markersLayer).on("click",()=>{selectedProvince=first.province||null;render();const p=PROVINCE_CENTERS[selectedProvince];if(p)map.flyTo(p,7.5,{duration:.45});openFeed();});}statusText.textContent=`${filtered.length} güncel gelişme`;}
-function formatDate(v){const d=parseDate(v);return d?new Intl.DateTimeFormat("tr-TR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}).format(d):"Zaman bilgisi yok";}
-function renderFeed(){const f=visibleSignals();feedTitle.textContent=selectedProvince||"Türkiye";feedSubtitle.textContent=`${f.length} gelişme`;favoriteButton.style.visibility=selectedProvince?"visible":"hidden";favoriteButton.classList.toggle("active",selectedProvince&&favorites.has(selectedProvince));favoriteButton.textContent=selectedProvince&&favorites.has(selectedProvince)?"★":"☆";feedList.innerHTML="";if(!f.length){feedList.innerHTML=`<div class="empty-state"><strong>Şu anda yeni bir gelişme yok.</strong><br><br>Başka bir zaman filtresi veya şehir deneyebilirsin.</div>`;return;}for(const s of f.slice(0,80)){const c=template.content.cloneNode(true);c.querySelector(".category-badge").textContent=CATEGORY_LABELS[s.category]||"Yerel";c.querySelector(".category-badge").classList.add(markerClass(s.category));c.querySelector("time").textContent=formatDate(s.published_at);c.querySelector("h2").textContent=s.title;c.querySelector(".feed-source").textContent=`Kaynak · ${s.source_id||"Resmî kaynak"}`;const l=c.querySelector(".source-link");if(s.source_url&&/^https?:\/\//.test(s.source_url))l.href=s.source_url;else l.remove();c.querySelector(".show-on-map").addEventListener("click",()=>{const p=provincePosition(s);if(p)map.flyTo(p,Number.isFinite(s.latitude)?10:8,{duration:.5});if(innerWidth<=820)feedPanel.classList.remove("open");});feedList.appendChild(c);}}
-function renderCategoryFilters(){const cats=["ALL",...Object.keys(CATEGORY_LABELS).filter(c=>signals.some(s=>s.category===c))];categoryFilters.innerHTML="";for(const cat of cats){const b=document.createElement("button");b.textContent=cat==="ALL"?"Tümü":CATEGORY_LABELS[cat];b.classList.toggle("active",selectedCategory===cat);b.onclick=()=>{selectedCategory=cat;render();};categoryFilters.appendChild(b);}}
-function openFeed(){if(innerWidth<=820)feedPanel.classList.add("open");}
-function render(){renderCategoryFilters();renderMarkers();renderFeed();}
-function saveFavorites(){localStorage.setItem("tp:favorites",JSON.stringify([...favorites]));}
-favoriteButton.onclick=e=>{e.stopPropagation();if(!selectedProvince)return;favorites.has(selectedProvince)?favorites.delete(selectedProvince):favorites.add(selectedProvince);saveFavorites();renderFeed();};
-document.getElementById("savedButton").onclick=()=>{if(!favorites.size){alert("Henüz kayıtlı bir şehrin yok. Bir şehir seçip yıldız simgesine dokunabilirsin.");return;}selectedProvince=[...favorites][0];const p=PROVINCE_CENTERS[selectedProvince];if(p)map.flyTo(p,7.5,{duration:.5});render();openFeed();};
-feedPanel.querySelector(".feed-head").onclick=()=>{if(innerWidth<=820)feedPanel.classList.toggle("open");};
-for(const b of document.querySelectorAll("[data-time]"))b.onclick=()=>{selectedTime=b.dataset.time;document.querySelectorAll("[data-time]").forEach(i=>i.classList.toggle("active",i===b));render();};
-searchInput.oninput=()=>{const q=searchInput.value.trim().toLocaleLowerCase("tr-TR");if(q){const p=[...new Set(signals.map(s=>s.province).filter(Boolean))].find(n=>n.toLocaleLowerCase("tr-TR").startsWith(q));if(p)selectedProvince=p;}else selectedProvince=null;render();};
-async function boot(){initMap();try{const r=await fetch("data/signals.json",{cache:"no-store"});if(!r.ok)throw new Error(`HTTP ${r.status}`);signals=await r.json();statusText.textContent=`${signals.length} görünür sinyal yüklendi`;}catch(e){console.error(e);statusText.textContent="Veriler şu anda yüklenemedi";}render();if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(console.error);}
+
+function initMap() {
+  map = L.map("map", {
+    zoomControl: false,
+    attributionControl: false,
+    minZoom: 5,
+    maxZoom: 10,
+    zoomSnap: 0.25,
+    preferCanvas: true,
+  });
+  map.fitBounds(FALLBACK_BOUNDS, { padding: [18, 18] });
+  markersLayer = L.layerGroup().addTo(map);
+  labelsLayer = L.layerGroup().addTo(map);
+}
+
+function baseProvinceStyle(feature) {
+  const name = normalizeProvinceName(feature?.properties?.name);
+  const selected = selectedProvince && name === selectedProvince;
+  return {
+    color: selected ? "#9caaa5" : "#d8ddd6",
+    weight: selected ? 1.8 : 0.8,
+    fillColor: selected ? "#fffdf4" : "#f6f4e9",
+    fillOpacity: 1,
+  };
+}
+
+async function loadTurkeyMap() {
+  try {
+    const response = await fetch(GEOJSON_URL, { cache: "force-cache" });
+    if (!response.ok) throw new Error(`GeoJSON HTTP ${response.status}`);
+    const geojson = await response.json();
+    provinceLayer = L.geoJSON(geojson, {
+      style: baseProvinceStyle,
+      onEachFeature(feature, layer) {
+        const name = normalizeProvinceName(feature?.properties?.name);
+        if (!name) return;
+        provinceLayers.set(name, layer);
+        provinceCenters[name] = [layer.getBounds().getCenter().lat, layer.getBounds().getCenter().lng];
+        layer.on({
+          mouseover: () => layer.setStyle({ fillColor: "#fffdf5", weight: 1.3 }),
+          mouseout: () => refreshProvinceStyles(),
+          click: () => selectProvince(name, true),
+        });
+      },
+    }).addTo(map);
+    turkeyBounds = provinceLayer.getBounds();
+    map.setMaxBounds(turkeyBounds.pad(0.08));
+    map.options.maxBoundsViscosity = 1;
+    fitTurkey();
+  } catch (error) {
+    console.error("Province map could not be loaded", error);
+    map.setMaxBounds(FALLBACK_BOUNDS.pad(0.08));
+    fitTurkey();
+  }
+}
+
+function fitTurkey() {
+  const mobilePadding = window.innerWidth <= 820 ? [8, 18] : [26, 42];
+  map.fitBounds(turkeyBounds, { padding: mobilePadding, animate: true, duration: 0.35 });
+}
+
+function refreshProvinceStyles() {
+  if (provinceLayer) provinceLayer.setStyle(baseProvinceStyle);
+}
+
+function parseDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function passesTime(signal) {
+  const date = parseDate(signal.published_at);
+  const now = new Date();
+  if (selectedTime === "now") return signal.freshness === "NOW";
+  if (!date) return selectedTime === "7d";
+  if (selectedTime === "today") {
+    return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
+  }
+  const from = new Date(now.getTime() - 7 * 86400000);
+  const to = new Date(now.getTime() + 7 * 86400000);
+  return date >= from && date <= to;
+}
+
+function visibleSignals({ ignoreProvince = false } = {}) {
+  const query = searchInput.value.trim().toLocaleLowerCase("tr-TR");
+  return signals.filter((signal) => {
+    if (!passesTime(signal)) return false;
+    if (selectedCategory !== "ALL" && signal.category !== selectedCategory) return false;
+    if (!ignoreProvince && selectedProvince && signal.province !== selectedProvince) return false;
+    if (!query) return true;
+    return `${signal.province || ""} ${signal.title || ""}`.toLocaleLowerCase("tr-TR").includes(query);
+  });
+}
+
+function signalPosition(signal) {
+  if (Number.isFinite(signal.latitude) && Number.isFinite(signal.longitude)) return [signal.latitude, signal.longitude];
+  return provinceCenters[signal.province] || null;
+}
+
+function categoryMeta(category) {
+  return CATEGORY_META[category] || CATEGORY_META.OTHER;
+}
+
+function signalPriority(signal) {
+  if (signal.relevance === "HIGH") return "high";
+  if (signal.relevance === "LOW") return "low";
+  return "normal";
+}
+
+function renderMapLayers() {
+  markersLayer.clearLayers();
+  labelsLayer.clearLayers();
+  const filtered = visibleSignals();
+  const groups = new Map();
+
+  for (const signal of filtered) {
+    const position = signalPosition(signal);
+    if (!position) continue;
+    const precise = Number.isFinite(signal.latitude) && Number.isFinite(signal.longitude);
+    const key = precise ? `signal:${signal.id}` : `province:${signal.province}:${signal.category}`;
+    if (!groups.has(key)) groups.set(key, { signals: [], position });
+    groups.get(key).signals.push(signal);
+  }
+
+  for (const group of groups.values()) {
+    const first = group.signals[0];
+    const meta = categoryMeta(first.category);
+    const count = group.signals.reduce((sum, item) => sum + (item.signal_count || 1), 0);
+    const priority = group.signals.some((item) => signalPriority(item) === "high") ? "high" : signalPriority(first);
+    const icon = L.divIcon({
+      className: "pulse-marker-wrap",
+      html: `<div class="pulse-marker ${meta.css} ${priority}">${count}</div>`,
+      iconSize: [42, 42],
+      iconAnchor: [21, 21],
+    });
+    L.marker(group.position, { icon, keyboard: true })
+      .addTo(markersLayer)
+      .on("click", () => selectProvince(first.province, true));
+  }
+
+  const provincesToLabel = new Set(filtered.map((s) => s.province).filter(Boolean));
+  for (const province of provincesToLabel) {
+    const position = provinceCenters[province];
+    if (!position) continue;
+    const label = L.divIcon({
+      className: "province-label-wrap",
+      html: `<span class="province-label">${province}</span>`,
+      iconSize: [90, 20],
+      iconAnchor: [45, -13],
+    });
+    L.marker(position, { icon: label, interactive: false }).addTo(labelsLayer);
+  }
+
+  statusText.textContent = `${filtered.length} gelişme`;
+}
+
+function formatTime(value) {
+  const date = parseDate(value);
+  if (!date) return "--:--";
+  return new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+function timeLabel() {
+  if (selectedTime === "now") return "Şimdi";
+  if (selectedTime === "7d") return "7 Gün";
+  return "Bugün";
+}
+
+function categoryLabel() {
+  return selectedCategory === "ALL" ? "Tümü" : (categoryMeta(selectedCategory).short || categoryMeta(selectedCategory).label);
+}
+
+function createFeedCard(signal) {
+  const fragment = template.content.cloneNode(true);
+  const article = fragment.querySelector(".feed-card");
+  const meta = categoryMeta(signal.category);
+  const priority = signalPriority(signal);
+  const icon = fragment.querySelector(".feed-row-icon");
+  icon.className = `feed-row-icon ${meta.css}`;
+  icon.textContent = meta.icon;
+  fragment.querySelector(".category-name").textContent = meta.label.toUpperCase();
+  fragment.querySelector("time").textContent = formatTime(signal.published_at);
+  fragment.querySelector("h3").textContent = signal.title;
+  fragment.querySelector(".feed-place").textContent = signal.province || "Türkiye";
+  fragment.querySelector(".feed-source").textContent = `Kaynak: ${signal.source_id || "Resmî kaynak"}`;
+  const pill = fragment.querySelector(".priority-pill");
+  pill.className = `priority-pill ${priority}`;
+  pill.textContent = priority === "high" ? "Yüksek" : priority === "low" ? "Düşük" : "Normal";
+  const sourceLink = fragment.querySelector(".source-link");
+  if (signal.source_url && /^https?:\/\//.test(signal.source_url)) sourceLink.href = signal.source_url;
+  else sourceLink.remove();
+  fragment.querySelector(".show-on-map").addEventListener("click", () => {
+    const position = signalPosition(signal);
+    if (position) map.flyTo(position, Number.isFinite(signal.latitude) ? 9 : 7, { duration: 0.4 });
+  });
+  article.addEventListener("click", (event) => {
+    if (event.target.closest("button,a")) return;
+    selectProvince(signal.province, true);
+  });
+  return fragment;
+}
+
+function renderFeeds() {
+  const filtered = visibleSignals();
+  const title = selectedProvince ? `${selectedProvince} · ${categoryLabel()}` : `${timeLabel()} · ${categoryLabel()}`;
+  const subtitle = `${filtered.length} gelişme bulundu`;
+  feedTitle.textContent = title;
+  mobileFeedTitle.textContent = title;
+  feedSubtitle.textContent = subtitle;
+  mobileFeedSubtitle.textContent = subtitle;
+  desktopFeedList.innerHTML = "";
+  mobileFeedList.innerHTML = "";
+
+  if (!filtered.length) {
+    const empty = `<div class="empty-state"><strong>Şu anda yeni bir gelişme yok.</strong><span>Başka bir filtre veya şehir deneyebilirsin.</span></div>`;
+    desktopFeedList.innerHTML = empty;
+    mobileFeedList.innerHTML = empty;
+  } else {
+    for (const signal of filtered.slice(0, 30)) {
+      desktopFeedList.appendChild(createFeedCard(signal));
+      mobileFeedList.appendChild(createFeedCard(signal));
+    }
+  }
+  updateFavoriteButtons();
+}
+
+function renderCategories() {
+  const available = ["ALL", ...Object.keys(CATEGORY_META).filter((key) => key !== "ALL" && signals.some((s) => s.category === key))];
+  const desktop = el("desktopCategories");
+  const mobile = el("mobileCategories");
+  desktop.innerHTML = "";
+  mobile.innerHTML = "";
+
+  for (const category of available) {
+    const meta = CATEGORY_META[category];
+    const desktopButton = document.createElement("button");
+    desktopButton.className = `category-button ${meta.css}${selectedCategory === category ? " active" : ""}`;
+    desktopButton.innerHTML = `<span class="category-icon">${meta.icon}</span><span>${meta.label}</span>`;
+    desktopButton.addEventListener("click", () => setCategory(category));
+    desktop.appendChild(desktopButton);
+
+    const mobileButton = document.createElement("button");
+    mobileButton.className = `mobile-category ${meta.css}${selectedCategory === category ? " active" : ""}`;
+    mobileButton.innerHTML = `<span class="category-icon">${meta.icon}</span><small>${meta.short || meta.label}</small>`;
+    mobileButton.addEventListener("click", () => setCategory(category));
+    mobile.appendChild(mobileButton);
+  }
+}
+
+function renderTimeButtons() {
+  document.querySelectorAll("[data-time]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.time === selectedTime);
+  });
+}
+
+function render() {
+  renderTimeButtons();
+  renderCategories();
+  renderMapLayers();
+  renderFeeds();
+  refreshProvinceStyles();
+}
+
+function setCategory(category) {
+  selectedCategory = category;
+  render();
+}
+
+function selectProvince(province, openSheet = false) {
+  if (!province) return;
+  selectedProvince = selectedProvince === province ? null : province;
+  render();
+  if (selectedProvince) {
+    const layer = provinceLayers.get(selectedProvince);
+    if (layer) map.flyToBounds(layer.getBounds(), { padding: [55, 55], maxZoom: 7.3, duration: 0.4 });
+    else if (provinceCenters[selectedProvince]) map.flyTo(provinceCenters[selectedProvince], 7, { duration: 0.4 });
+  } else {
+    fitTurkey();
+  }
+  if (openSheet && window.innerWidth <= 820) mobileSheet.classList.add("open");
+}
+
+function saveFavorites() {
+  localStorage.setItem("tp:favorites", JSON.stringify([...favorites]));
+}
+
+function toggleFavorite() {
+  if (!selectedProvince) return;
+  favorites.has(selectedProvince) ? favorites.delete(selectedProvince) : favorites.add(selectedProvince);
+  saveFavorites();
+  updateFavoriteButtons();
+}
+
+function updateFavoriteButtons() {
+  const active = selectedProvince && favorites.has(selectedProvince);
+  [favoriteButton, mobileFavoriteButton].forEach((button) => {
+    button.style.visibility = selectedProvince ? "visible" : "hidden";
+    button.classList.toggle("active", Boolean(active));
+    button.textContent = active ? "★" : "☆";
+  });
+}
+
+function openFavorites() {
+  if (!favorites.size) {
+    alert("Henüz favori şehrin yok. Haritadan bir şehir seçip yıldızla kaydedebilirsin.");
+    return;
+  }
+  selectProvince([...favorites][0], true);
+}
+
+function focusSearch() {
+  searchInput.focus();
+  if (window.innerWidth <= 820) mobileSheet.classList.remove("open");
+}
+
+for (const button of document.querySelectorAll("[data-time]")) {
+  button.addEventListener("click", () => {
+    selectedTime = button.dataset.time;
+    render();
+  });
+}
+
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.trim().toLocaleLowerCase("tr-TR");
+  if (!query) selectedProvince = null;
+  else {
+    const province = [...new Set(signals.map((s) => s.province).filter(Boolean))]
+      .find((name) => name.toLocaleLowerCase("tr-TR").startsWith(query));
+    if (province) selectedProvince = province;
+  }
+  render();
+});
+
+favoriteButton.addEventListener("click", toggleFavorite);
+mobileFavoriteButton.addEventListener("click", toggleFavorite);
+el("desktopFavorites").addEventListener("click", openFavorites);
+el("mobileFavorites").addEventListener("click", openFavorites);
+el("desktopSearchNav").addEventListener("click", focusSearch);
+el("mobileSearch").addEventListener("click", focusSearch);
+el("mobileDevelopments").addEventListener("click", () => mobileSheet.classList.add("open"));
+el("showAllDesktop").addEventListener("click", () => { selectedProvince = null; render(); fitTurkey(); });
+el("resetMapButton").addEventListener("click", () => { selectedProvince = null; searchInput.value = ""; render(); fitTurkey(); });
+el("sheetHandle").addEventListener("click", () => mobileSheet.classList.toggle("open"));
+el("mobileMenuButton").addEventListener("click", () => mobileSheet.classList.toggle("open"));
+
+window.addEventListener("resize", () => {
+  if (!map) return;
+  map.invalidateSize();
+});
+
+async function boot() {
+  initMap();
+  const [mapResult, signalsResult] = await Promise.allSettled([
+    loadTurkeyMap(),
+    fetch("data/signals.json", { cache: "no-store" }).then((response) => {
+      if (!response.ok) throw new Error(`Signals HTTP ${response.status}`);
+      return response.json();
+    }),
+  ]);
+
+  if (signalsResult.status === "fulfilled") signals = signalsResult.value;
+  else {
+    console.error(signalsResult.reason);
+    statusText.textContent = "Veriler şu anda yüklenemedi";
+  }
+  render();
+  if (mapResult.status === "rejected") console.error(mapResult.reason);
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(console.error);
+  }
+}
+
 boot();
