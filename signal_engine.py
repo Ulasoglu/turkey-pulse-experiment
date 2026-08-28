@@ -8,7 +8,8 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
 INFILE=ROOT/"data"/"filtered_signals.jsonl"; OUTFILE=ROOT/"data"/"map_signals.jsonl"
-ENGINE_VERSION="signal-engine-v3-bursa"
+ENGINE_VERSION="signal-engine-v4-structured-events"
+STRUCTURED_EVENT_SOURCES={"bursa_open_data_events","izmir_open_data_events"}
 CATEGORY_RULES=[("WEATHER",{"uyarı","sağanak","yağış","fırtına","rüzgâr","rüzgar","sıcak","sıcaklık"}),("TRAFFIC",{"trafik","ulaşım","yol","cadde","sokak","köprü","tünel","istasyon","metro","tramvay","izban","otobüs","vapur","sefer"}),("UTILITY",{"elektrik kesintisi","su kesintisi","doğalgaz","arıza"}),("EVENT",{"etkinlik","festival","konser","kutlanacak","coşkusu","bayram","sergi","ücretsiz","indirimli"}),("INFRASTRUCTURE",{"altyapı","yenileme","proje","inşaat"})]
 HIGH_RELEVANCE_TERMS={"uyarı","kapatıldı","kesintisi","arıza","trafik","ulaşım","deprem","yangın","sağanak","fırtına","yağış"}
 MEDIUM_RELEVANCE_TERMS={"etkinlik","festival","konser","bayram","ücretsiz","indirimli","yenileme","altyapı","proje"}
@@ -30,13 +31,13 @@ def parse_iso(v):
 def detect_category(row):
     sid=text(row.get("source_id")); title=normalize(row.get("title"))
     if sid=="afad_event_service":return "EARTHQUAKE"
-    if sid=="bursa_open_data_events":return "EVENT"
+    if sid in STRUCTURED_EVENT_SOURCES:return "EVENT"
     for category,terms in CATEGORY_RULES:
         if has_any(title,terms):return category
     return "OTHER"
 
 def detect_relevance(row,category):
-    if text(row.get("source_id"))=="bursa_open_data_events":return "MEDIUM"
+    if text(row.get("source_id")) in STRUCTURED_EVENT_SOURCES:return "MEDIUM"
     title=normalize(row.get("title"))
     if category=="EARTHQUAKE":
         try:m=float(row.get("magnitude"))
