@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin
@@ -107,6 +108,74 @@ def collect_konya_events(source):
         print("ERROR KONYA EVENTS", exc, flush=True)
 
 
+def collect_samsun_events(source):
+    collected_at = collector.now_iso()
+    known = collector.seen_hashes(source["id"])
+    now = datetime.now(timezone.utc)
+    try:
+        response = requests.get(source["url"], headers=collector.HEADERS, timeout=30)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        seen = set()
+        events = []
+        stale = 0
+        for anchor in soup.select('a[href*="/guncel/etkinlikler/"]'):
+            href = anchor.get("href")
+            if not href:
+                continue
+            detail_url = urljoin(response.url, href)
+            if detail_url in seen:
+                continue
+            text = " ".join(anchor.get_text(" ", strip=True).split())
+            if not text:
+                continue
+            published_at = collector.parse_date_tr(text)
+            if not published_at:
+                continue
+            start = datetime.fromisoformat(published_at)
+            time_match = re.search(r"\b([01]?\d|2[0-3]):([0-5]\d)\b", text)
+            if time_match:
+                start = start.replace(hour=int(time_match.group(1)), minute=int(time_match.group(2)))
+            if not collector.event_is_eligible(source, start, None, now):
+                stale += 1
+                seen.add(detail_url)
+                continue
+            date_text = re.search(r"\b\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2}\b", text)
+            title_text = text
+            if date_text:
+                title_text = text[date_text.end():].strip()
+            title_text = re.sub(r"^(?:Pazartesi|Salı|Çarşamba|Perşembe|Cuma|Cumartesi|Pazar)\s*[•·-]?\s*", "", title_text, flags=re.I)
+            title_text = re.sub(r"^\d{1,2}:\d{2}\s*", "", title_text)
+            title_text = re.sub(r"\s+Detayları İncele\s*$", "", title_text, flags=re.I).strip()
+            # Remove trailing province/venue only when markup exposes a distinct location element below.
+            venue = None
+            for node in anchor.find_all(["span", "p", "div"], recursive=True):
+                node_text = " ".join(node.get_text(" ", strip=True).split())
+                if node_text and node_text != text and len(node_text) < 140 and any(k in node_text.casefold() for k in ("meydan", "salon", "park", "merkez", "samsun", "ahlat")):
+                    venue = node_text
+            if not title_text:
+                title_text = detail_url.rstrip("/").split("/")[-1].replace("-", " ").title()
+            seen.add(detail_url)
+            events.append((title_text, start, venue, detail_url))
+
+        new_count = 0
+        for title, start, venue, detail_url in events:
+            event_id = detail_url.rstrip("/").split("/")[-1]
+            content_hash = collector.sha256_json({"id": event_id, "title": title, "start": start.isoformat(), "venue": venue, "url": detail_url})
+            if content_hash in known:
+                continue
+            row = collector.base_row(source, collected_at, response.status_code, content_hash, title, start.isoformat(), detail_url)
+            row.update({"event_id": event_id, "event_start_at": start.isoformat(), "event_end_at": None, "event_category": "culture", "venue": venue, "image_url": None, "raw_summary": "samsun_official_event_html"})
+            collector.append(row)
+            known.add(content_hash)
+            new_count += 1
+            print("NEW SAMSUN EVENT", start.isoformat(), title, "venue=", venue, flush=True)
+        print(f"Samsun events parsed={len(events)} stale_skipped={stale} new={new_count}", flush=True)
+    except Exception as exc:
+        collector.error_row(source, exc)
+        print("ERROR SAMSUN EVENTS", exc, flush=True)
+
+
 def collect_municipal_feed_fast(source):
     if source.get("id") != "akom_istanbul_news":
         return _original_collect_municipal_feed(source)
@@ -184,6 +253,8 @@ def run_source_with_label(source):
         collector.collect_ankara_events(source)
     elif mode == "konya_events":
         collect_konya_events(source)
+    elif mode == "samsun_events":
+        collect_samsun_events(source)
     elif mode == "afad_events":
         collector.collect_afad_events(source)
     elif mode == "municipal_feed":
