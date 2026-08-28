@@ -35,9 +35,9 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Probe Antalya events
+      - name: Probe Konya events
         continue-on-error: true
-        run: python probe_antalya_events.py
+        run: python probe_konya_events.py
 
       - name: Run collector
         run: python -u run_collector_guarded.py
