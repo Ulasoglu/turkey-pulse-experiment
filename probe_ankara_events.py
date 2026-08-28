@@ -7,88 +7,73 @@ import requests
 from bs4 import BeautifulSoup
 
 URL = "https://kultursanat.ankara.bel.tr/"
-EVENTS_URL = "https://kultursanat.ankara.bel.tr/Etkinlikler"
-EVENTFLOW_URL = "https://kultursanat.ankara.bel.tr/assets/js/eventflow.js"
 HEADERS = {
-    "User-Agent": "TurkeyPulseFeasibilityExperiment/0.8 (+non-commercial feasibility probe)",
+    "User-Agent": "TurkeyPulseFeasibilityExperiment/1.0 (+non-commercial feasibility probe)",
     "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.8",
 }
 
 
 def get(url):
     r = requests.get(url, headers=HEADERS, timeout=30)
-    print("FETCH", url, "->", r.status_code, r.headers.get("content-type"), len(r.content), "bytes")
+    print("FETCH", url, "->", r.status_code, len(r.content), "bytes")
     r.raise_for_status()
     return r
 
 
-def event_links_from(html, base):
+def event_links(html, base):
     soup = BeautifulSoup(html, "html.parser")
     out=[]; seen=set()
     for a in soup.select('a[href*="/event/"]'):
         href=a.get("href")
         if not href: continue
-        absolute=urljoin(base, href)
-        if absolute in seen: continue
-        seen.add(absolute)
-        out.append((" ".join(a.get_text(" ", strip=True).split()), absolute))
+        link=urljoin(base,href)
+        if link not in seen:
+            seen.add(link); out.append(link)
     return out
 
 
-def print_endpoint_hints(label, body, base):
-    hints=set()
-    patterns=[
-        r"https?://[^\"'\s<>]+",
-        r"/[A-Za-z0-9_./?=&%-]*(?:api|event|etkinlik|ajax|load|page)[A-Za-z0-9_./?=&%-]*",
-    ]
-    for pattern in patterns:
-        for match in re.findall(pattern, body, re.I):
-            hints.add(urljoin(base, match))
-    print(label, "ENDPOINT HINTS:", len(hints))
-    for hint in sorted(hints)[:100]: print("HINT", hint)
-
-
 def inspect_detail(url):
-    r=get(url); soup=BeautifulSoup(r.text, "html.parser")
-    text=" ".join(soup.get_text(" ", strip=True).split())
-    dates=sorted(set(re.findall(r"\b\d{2}\.\d{2}\.20\d{2}\b", text)))
-    times=sorted(set(re.findall(r"\b(?:[01]\d|2[0-3]):[0-5]\d\b", text)))
-    print("DETAIL", url)
-    print("  TITLE:", (soup.title.get_text(" ", strip=True) if soup.title else "")[:180])
-    print("  DATES:", dates[:20])
-    print("  TIMES:", times[:20])
-    for key in ["location", "venue", "address", "place", "startDate", "endDate"]:
-        if key.casefold() in r.text.casefold(): print("  HAS FIELD TOKEN:", key)
-    for script in soup.find_all("script"):
-        body=script.string or script.get_text(" ", strip=True)
-        if any(x in body.casefold() for x in ["startdate","enddate","location","etkinlik"]):
-            compact=" ".join(body.split())
-            if compact: print("  SCRIPT SAMPLE:", compact[:700])
+    r=get(url); soup=BeautifulSoup(r.text,"html.parser")
+    print("\nDETAIL",url)
+    print("TITLE",(soup.title.get_text(" ",strip=True) if soup.title else "")[:180])
+
+    # Print compact markup around likely venue/location tokens so the production
+    # parser can target the site's real structure rather than guessing labels.
+    tokens=("mekan","mekân","yer","adres","location","venue","konum","salon","merkez")
+    matches=[]
+    for tag in soup.find_all(True):
+        attrs=" ".join(f"{k}={v}" for k,v in tag.attrs.items()).casefold()
+        text=" ".join(tag.get_text(" ",strip=True).split())
+        hay=(attrs+" "+text).casefold()
+        if any(t in hay for t in tokens):
+            snippet=str(tag)
+            snippet=" ".join(snippet.split())
+            if 0 < len(snippet) <= 1800:
+                matches.append(snippet)
+    # de-duplicate while preserving order
+    seen=set(); unique=[]
+    for x in matches:
+        if x not in seen:
+            seen.add(x); unique.append(x)
+    print("VENUE MARKUP CANDIDATES",len(unique))
+    for x in unique[:30]: print("VENUE_HTML",x)
+
+    # Also expose JSON-LD/meta because venue may be machine-readable there.
+    for script in soup.find_all("script",attrs={"type":"application/ld+json"}):
+        body=" ".join(script.get_text(" ",strip=True).split())
+        if body: print("JSONLD",body[:3000])
+    for meta in soup.find_all("meta"):
+        key=(meta.get("property") or meta.get("name") or "").casefold()
+        if any(t in key for t in ("place","location","venue","address")):
+            print("META",key,meta.get("content"))
 
 
 def main():
-    print("=== ANKARA EVENTS DEEP PROBE ===")
+    print("=== ANKARA VENUE PROBE ===")
     home=get(URL)
-    links=event_links_from(home.text, home.url)
-    print("HOME EVENT LINKS:", len(links))
-    for title,link in links[:20]: print("EVENT", repr(title[:120]), link)
-
-    events=get(EVENTS_URL)
-    events_links=event_links_from(events.text, events.url)
-    print("ETKINLIKLER EVENT LINKS:", len(events_links))
-    for title,link in events_links[:40]: print("EVENT", repr(title[:120]), link)
-    print_endpoint_hints("ETKINLIKLER", events.text, events.url)
-
-    js=get(EVENTFLOW_URL)
-    print("EVENTFLOW SAMPLE:", " ".join(js.text.split())[:2500])
-    print_endpoint_hints("EVENTFLOW", js.text, js.url)
-
-    all_links=[]; seen=set()
-    for item in links+events_links:
-        if item[1] not in seen:
-            seen.add(item[1]); all_links.append(item)
-    print("DETAIL PAGES TO SAMPLE:", min(3,len(all_links)))
-    for _,link in all_links[:3]: inspect_detail(link)
+    links=event_links(home.text,home.url)
+    print("EVENT LINKS",len(links))
+    for link in links[:5]: inspect_detail(link)
 
 
-if __name__ == "__main__": main()
+if __name__=="__main__": main()
