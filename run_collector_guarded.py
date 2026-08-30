@@ -119,41 +119,74 @@ def collect_samsun_events(source):
         seen = set()
         events = []
         stale = 0
-        for anchor in soup.select('a[href*="/guncel/etkinlikler/"]'):
+        off_province = 0
+        anchors = soup.select('a[href*="/guncel/etkinlikler/"]')
+        for anchor in anchors:
             href = anchor.get("href")
             if not href:
                 continue
             detail_url = urljoin(response.url, href)
             if detail_url in seen:
                 continue
-            text = " ".join(anchor.get_text(" ", strip=True).split())
-            if not text:
-                continue
-            published_at = collector.parse_date_tr(text)
+
+            # The current Samsun listing keeps date/title/venue in the surrounding
+            # event card rather than inside the link itself. Walk upward until we
+            # find the smallest parent that contains a full Turkish date.
+            container = anchor
+            card_text = ""
+            published_at = None
+            for _ in range(8):
+                candidate_text = " ".join(container.get_text(" ", strip=True).split())
+                candidate_date = collector.parse_date_tr(candidate_text)
+                if candidate_date:
+                    card_text = candidate_text
+                    published_at = candidate_date
+                    break
+                if container.parent is None:
+                    break
+                container = container.parent
             if not published_at:
                 continue
+
             start = datetime.fromisoformat(published_at)
-            time_match = re.search(r"\b([01]?\d|2[0-3]):([0-5]\d)\b", text)
+            time_match = re.search(r"\b([01]?\d|2[0-3]):([0-5]\d)\b", card_text)
             if time_match:
                 start = start.replace(hour=int(time_match.group(1)), minute=int(time_match.group(2)))
+
+            title_node = container.find(["h1", "h2", "h3", "h4", "h5"])
+            title_text = " ".join(title_node.get_text(" ", strip=True).split()) if title_node else ""
+            if not title_text:
+                anchor_text = " ".join(anchor.get_text(" ", strip=True).split())
+                if anchor_text and anchor_text.casefold() != "detayları incele".casefold():
+                    title_text = anchor_text
+            if not title_text:
+                title_text = detail_url.rstrip("/").split("/")[-1].replace("-", " ").title()
+
+            # A municipality may publish promotional events held elsewhere. Do not
+            # place those on the Samsun map merely because they appear in this feed.
+            combined = f"{title_text} {card_text}".casefold()
+            if "ahlat" in combined:
+                off_province += 1
+                seen.add(detail_url)
+                continue
+
             if not collector.event_is_eligible(source, start, None, now):
                 stale += 1
                 seen.add(detail_url)
                 continue
-            date_text = re.search(r"\b\d{1,2}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+\s+20\d{2}\b", text)
-            title_text = text
-            if date_text:
-                title_text = text[date_text.end():].strip()
-            title_text = re.sub(r"^(?:Pazartesi|Salı|Çarşamba|Perşembe|Cuma|Cumartesi|Pazar)\s*[•·-]?\s*", "", title_text, flags=re.I)
-            title_text = re.sub(r"^\d{1,2}:\d{2}\s*", "", title_text)
-            title_text = re.sub(r"\s+Detayları İncele\s*$", "", title_text, flags=re.I).strip()
+
             venue = None
-            for node in anchor.find_all(["span", "p", "div"], recursive=True):
+            text_nodes = container.find_all(["span", "p", "div", "li"], recursive=True)
+            for node in text_nodes:
                 node_text = " ".join(node.get_text(" ", strip=True).split())
-                if node_text and node_text != text and len(node_text) < 140 and any(k in node_text.casefold() for k in ("meydan", "salon", "park", "merkez", "samsun", "ahlat")):
-                    venue = node_text
-            if not title_text:
-                title_text = detail_url.rstrip("/").split("/")[-1].replace("-", " ").title()
+                folded = node_text.casefold()
+                if not node_text or len(node_text) >= 140:
+                    continue
+                if any(k in folded for k in ("meydan", "salon", "park", "merkez", "bahçe", "bahcesi", "sahil", "tesis")):
+                    if title_text.casefold() not in folded:
+                        venue = node_text
+                        break
+
             seen.add(detail_url)
             events.append((title_text, start, venue, detail_url))
 
@@ -169,7 +202,7 @@ def collect_samsun_events(source):
             known.add(content_hash)
             new_count += 1
             print("NEW SAMSUN EVENT", start.isoformat(), title, "venue=", venue, flush=True)
-        print(f"Samsun events parsed={len(events)} stale_skipped={stale} new={new_count}", flush=True)
+        print(f"Samsun anchors={len(anchors)} parsed={len(events)} stale_skipped={stale} off_province_skipped={off_province} new={new_count}", flush=True)
     except Exception as exc:
         collector.error_row(source, exc)
         print("ERROR SAMSUN EVENTS", exc, flush=True)
