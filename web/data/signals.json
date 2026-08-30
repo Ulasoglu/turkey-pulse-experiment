@@ -180,13 +180,13 @@
     "precipitation_mm_24h": null
   },
   {
-    "id": "cluster_44525c0ea73b",
+    "id": "cluster_c88534aee61d",
     "province": "Giresun",
     "category": "WEATHER",
     "title": "Giresun: Kuvvetli yağış ihtimali",
     "relevance": "HIGH",
     "freshness": "NOW",
-    "published_at": "2026-08-30T13:19:31+00:00",
+    "published_at": "2026-08-30T13:34:36+00:00",
     "source_id": "ecmwf_open_data_weather",
     "source_url": "https://www.ecmwf.int/en/forecasts/datasets/open-data",
     "rights_status": "open_license_verified",
@@ -210,13 +210,13 @@
     "precipitation_mm_24h": 24.0
   },
   {
-    "id": "cluster_afb80a7b6520",
+    "id": "cluster_0b8ef93a4f0d",
     "province": "Ordu",
     "category": "WEATHER",
     "title": "Ordu: Kuvvetli yağış ihtimali",
     "relevance": "HIGH",
     "freshness": "NOW",
-    "published_at": "2026-08-30T13:19:31+00:00",
+    "published_at": "2026-08-30T13:34:36+00:00",
     "source_id": "ecmwf_open_data_weather",
     "source_url": "https://www.ecmwf.int/en/forecasts/datasets/open-data",
     "rights_status": "open_license_verified",
@@ -240,13 +240,13 @@
     "precipitation_mm_24h": 16.3
   },
   {
-    "id": "cluster_48a12c94b251",
+    "id": "cluster_afe9bf777157",
     "province": "Samsun",
     "category": "WEATHER",
     "title": "Samsun: Kuvvetli yağış ihtimali",
     "relevance": "HIGH",
     "freshness": "NOW",
-    "published_at": "2026-08-30T13:19:31+00:00",
+    "published_at": "2026-08-30T13:34:36+00:00",
     "source_id": "ecmwf_open_data_weather",
     "source_url": "https://www.ecmwf.int/en/forecasts/datasets/open-data",
     "rights_status": "open_license_verified",
