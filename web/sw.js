@@ -1,4 +1,4 @@
-const CACHE = "sehrin-ne-oldu-v4-images";
+const CACHE = "sehrin-ne-oldu-v5-detail-images";
 const SHELL = ["./", "./index.html", "./styles.css", "./mobile-tune.css", "./image-cards.css", "./app.js", "./image-cards.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
