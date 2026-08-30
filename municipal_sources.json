@@ -157,7 +157,7 @@
       "detail_fetch_limit": 20,
       "rights_status": "reuse_needs_final_check",
       "status": "active_test",
-      "notes": "Production listing produced 15 undated candidates, so detail-date fallback is enabled for validation. No explicit commercial reuse license for the exact news archive has been established; images disabled."
+      "notes": "Production listing produced 15 undated candidates; detail-date fallback resolved all 15 dates, but all were outside the seven-day freshness window in validation. Images disabled."
     },
     {
       "source_id": "duzce_bb_news",
@@ -176,8 +176,9 @@
       "url": "https://yeni.denizli.bel.tr/Default.aspx?k=haberlist",
       "path_hints": ["k=haber-detay"],
       "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official current news archive exposes precise 2026 dates; verified detail pages use Default.aspx?id=<id>&k=haber-detay. No explicit commercial news-reuse grant established; images disabled."
+      "enabled": false,
+      "status": "paused_adapter_mismatch",
+      "notes": "Official source is reachable, but the generic municipal adapter parsed zero candidates in production. Keep paused as an adapter-family candidate until a shared second adapter is implemented. Images disabled."
     },
     {
       "source_id": "tekirdag_bb_news",
@@ -186,8 +187,9 @@
       "url": "https://tekirdag.bel.tr/",
       "path_hints": ["/haber/"],
       "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official homepage exposes current 2026 dates and verified details use /haber/<id>. No explicit commercial news-reuse grant established; images disabled."
+      "enabled": false,
+      "status": "paused_tls_chain",
+      "notes": "Official site failed TLS certificate-chain validation on GitHub-hosted Python runners. TLS verification must not be disabled. Re-enable only after the official certificate chain is fixed or a clean official endpoint is verified. Images disabled."
     },
     {
       "source_id": "zonguldak_bb_news",
@@ -198,6 +200,26 @@
       "rights_status": "reuse_needs_final_check",
       "status": "active_test",
       "notes": "Official news archive exposes precise 2026 dates and detail URLs use /haberler/<slug>. No commercial reuse grant is assumed; images disabled."
+    },
+    {
+      "source_id": "mugla_bb_news",
+      "province": "Muğla",
+      "name": "Muğla Büyükşehir Belediyesi",
+      "url": "https://www.mugla.bel.tr/haberler/",
+      "path_hints": ["/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official archive and homepage expose current August 2026 items with explicit dates; detail pages use /haber/<slug>. Footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."
+    },
+    {
+      "source_id": "rize_bel_duyurular",
+      "province": "Rize",
+      "name": "Rize Belediyesi",
+      "url": "https://www.rize.bel.tr/duyurular/tum",
+      "path_hints": ["/duyurular/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official municipal announcements include current dated local-service signals such as water outages and spraying schedules. Added as a municipal signal-source test; exact commercial reuse grant has not been established and images remain disabled."
     }
   ]
 }
