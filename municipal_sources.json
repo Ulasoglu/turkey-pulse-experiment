@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "adapter": "generic_municipal_news",
+  "defaults": {
+    "max_age_days": 7,
+    "rights_status": "reuse_needs_final_check",
+    "detail_date_fallback": false,
+    "detail_fetch_limit": 20,
+    "enabled": true
+  },
+  "sources": [
+    {
+      "source_id": "kayseri_bb_news",
+      "province": "Kayseri",
+      "name": "Kayseri Büyükşehir Belediyesi",
+      "url": "https://www.kayseri.bel.tr/haberler",
+      "path_hints": ["/haberler/", "/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active",
+      "notes": "Listing exposes usable dates directly. Images remain disabled until separately rights-cleared."
+    },
+    {
+      "source_id": "adana_bb_news",
+      "province": "Adana",
+      "name": "Adana Büyükşehir Belediyesi",
+      "url": "https://www.adana.bel.tr/tr/haberler",
+      "path_hints": ["/tr/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active",
+      "notes": "Listing dates are parseable. Seven-day freshness gate is enforced before append. Images remain disabled."
+    },
+    {
+      "source_id": "eskisehir_bb_news",
+      "province": "Eskişehir",
+      "name": "Eskişehir Büyükşehir Belediyesi",
+      "url": "https://www.eskisehir.bel.tr/haberler",
+      "path_hints": ["/icerik-detay.php"],
+      "detail_date_fallback": true,
+      "detail_fetch_limit": 20,
+      "rights_status": "reuse_needs_final_check",
+      "status": "active",
+      "notes": "Listing lacks dates; collector fetches detail pages only for undated candidates. Images remain disabled."
+    },
+    {
+      "source_id": "gaziantep_bb_news",
+      "province": "Gaziantep",
+      "name": "Gaziantep Büyükşehir Belediyesi",
+      "url": "https://gaziantep.bel.tr/tr/haberler",
+      "path_hints": ["/tr/haber/", "/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "enabled": false,
+      "status": "paused_tls_chain",
+      "notes": "Official site is browser-reachable but fails certificate-chain validation on GitHub-hosted Python runners. TLS verification must not be disabled. Re-enable only after a clean official endpoint or fixed certificate chain is verified."
+    }
+  ]
+}
