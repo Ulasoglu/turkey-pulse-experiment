@@ -119,6 +119,25 @@
       "notes": "Official AFAD Event Web Service. AFAD's earthquake site explicitly instructs users to use data, maps and information obtained from the site by referring to AFAD / the Turkish Earthquake Data Center System Regulation. Structured earthquake event data is therefore treated as reusable with mandatory attribution. This does not clear AFAD photos or other media for reuse."
     },
     {
+      "id": "ecmwf_open_data_weather",
+      "province": "ALL",
+      "name": "ECMWF Open Data (IFS)",
+      "source_type": "national_model_weather",
+      "url": "https://www.ecmwf.int/en/forecasts/datasets/open-data",
+      "rights_status": "open_license_verified",
+      "data_rights_status": "open_license_verified",
+      "image_rights_status": "reuse_needs_final_check",
+      "rights_evidence": [
+        "https://www.ecmwf.int/en/forecasts/datasets/open-data",
+        "https://confluence.ecmwf.int/pages/viewpage.action?pageId=272330270"
+      ],
+      "attribution_required": "ECMWF Open Data – CC BY 4.0",
+      "mode": "ecmwf_weather",
+      "freshness_policy": {"kind": "weather_model", "forecast_step_hours": 24},
+      "enabled": false,
+      "notes": "ECMWF IFS 0.25-degree open forecast fields are commercially reusable under CC BY 4.0 with attribution. Turkey Pulse derives province-level weather signals from model fields. These are model-derived signals and must never be presented as official MGM warnings. Source remains disabled in the production collector until staged candidate output has been reviewed."
+    },
+    {
       "id": "akom_istanbul_news",
       "province": "İstanbul",
       "name": "İBB AKOM Haberler",
