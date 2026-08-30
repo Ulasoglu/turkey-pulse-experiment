@@ -35,11 +35,11 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Collect ECMWF weather candidates
-        run: python -u collect_ecmwf_weather.py
-
       - name: Run collector
         run: python -u run_collector_guarded.py
+
+      - name: Collect ECMWF weather signals
+        run: python -u collect_ecmwf_weather.py
 
       - name: Filter signals
         run: python filter_signals.py
