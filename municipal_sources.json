@@ -71,6 +71,36 @@
       "rights_status": "reuse_needs_final_check",
       "status": "active",
       "notes": "Official listing exposes current Turkish dates and detail pages use /haber/. No explicit commercial reuse grant for the exact news archive has been established. Images remain disabled."
+    },
+    {
+      "source_id": "manisa_bb_news",
+      "province": "Manisa",
+      "name": "Manisa Büyükşehir Belediyesi",
+      "url": "https://www.manisa.bel.tr/Haberler/",
+      "path_hints": ["/Haberler/", "/haberler/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official current listing exposes precise dates and fresh 2026 items. Exact news-reuse license not established; images disabled. Added as shared-adapter compatibility test."
+    },
+    {
+      "source_id": "balikesir_bb_news",
+      "province": "Balıkesir",
+      "name": "Balıkesir Büyükşehir Belediyesi",
+      "url": "https://balikesir.bel.tr/haberler",
+      "path_hints": ["/haberler/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official current listing exposes dates and /haberler/... detail paths. Site footer states all rights reserved, so no commercial reuse grant is assumed; images disabled. Added as shared-adapter compatibility test."
+    },
+    {
+      "source_id": "trabzon_bb_news",
+      "province": "Trabzon",
+      "name": "Trabzon Büyükşehir Belediyesi",
+      "url": "https://trabzon.bel.tr/",
+      "path_hints": ["/Web/HaberDetay", "/Haber/", "/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official homepage exposes current news and dates. Site states all rights reserved; no general reuse grant established. Detail-path compatibility is intentionally being tested; images disabled."
     }
   ]
 }
