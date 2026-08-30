@@ -1,5 +1,5 @@
-const CACHE = "sehrin-ne-oldu-v5-detail-images";
-const SHELL = ["./", "./index.html", "./styles.css", "./mobile-tune.css", "./image-cards.css", "./app.js", "./image-cards.js", "./manifest.webmanifest"];
+const CACHE = "sehrin-ne-oldu-v6-weather-model-ui";
+const SHELL = ["./", "./index.html", "./styles.css", "./mobile-tune.css", "./image-cards.css", "./app.js", "./weather-ui.js", "./image-cards.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
