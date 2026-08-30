@@ -81,6 +81,30 @@ def error_row(source, exc):
     append(row)
 
 
+def extract_page_image(soup, page_url):
+    candidates = []
+    for attrs in (
+        {"property": "og:image"},
+        {"property": "og:image:url"},
+        {"name": "twitter:image"},
+        {"name": "twitter:image:src"},
+    ):
+        tag = soup.find("meta", attrs=attrs)
+        if tag and tag.get("content"):
+            candidates.append(tag.get("content"))
+    if not candidates:
+        image = soup.find("img")
+        if image:
+            candidates.append(image.get("src") or image.get("data-src"))
+    for candidate in candidates:
+        if not candidate:
+            continue
+        absolute = urljoin(page_url, str(candidate).strip())
+        if absolute.startswith(("http://", "https://")):
+            return absolute
+    return None
+
+
 def event_policy(source):
     policy = source.get("freshness_policy") or {}
     return int(policy.get("max_started_days", 7)), bool(policy.get("require_not_ended", True))
@@ -317,10 +341,7 @@ def extract_ankara_event(detail_url):
             break
 
     slug = detail_url.rstrip("/").split("/")[-1]
-    image = None
-    og_image = soup.find("meta", attrs={"property": "og:image"})
-    if og_image and og_image.get("content"):
-        image = urljoin(detail_url, og_image.get("content"))
+    image = extract_page_image(soup, detail_url)
 
     return {
         "title": title,
@@ -458,7 +479,7 @@ def collect_municipal_feed(source):
                     heading = ds.find("h1") or ds.find("h2")
                     title = " ".join((heading.get_text(" ", strip=True) if heading else a.get_text(" ", strip=True)).split())
                     if title:
-                        items.append((title, parse_date_tr(ds.get_text(" ", strip=True)[:4000]), article_url))
+                        items.append((title, parse_date_tr(ds.get_text(" ", strip=True)[:4000]), article_url, extract_page_image(ds, article_url)))
                 except Exception as exc:
                     print("AKOM detail error", article_url, exc)
                 time.sleep(0.25)
@@ -483,12 +504,20 @@ def collect_municipal_feed(source):
                 if not title or title.casefold() in {"detaya git", "detay"}:
                     continue
                 urls.add(article_url)
-                items.append((title, parse_date_tr(container.get_text(" ", strip=True)), article_url))
+                image_url = None
+                try:
+                    detail = requests.get(article_url, headers=HEADERS, timeout=25)
+                    detail.raise_for_status()
+                    ds = BeautifulSoup(detail.text, "html.parser")
+                    image_url = extract_page_image(ds, article_url)
+                except Exception as exc:
+                    print("IZMIR detail image error", article_url, exc)
+                items.append((title, parse_date_tr(container.get_text(" ", strip=True)), article_url, image_url))
         else:
             raise ValueError(f"Unsupported municipal source: {source['id']}")
         cutoff = datetime.now(timezone.utc) - timedelta(days=7)
         new_count = 0
-        for title, published_at, article_url in items:
+        for title, published_at, article_url, image_url in items:
             if published_at:
                 try:
                     if datetime.fromisoformat(published_at) < cutoff:
@@ -499,6 +528,8 @@ def collect_municipal_feed(source):
             if content_hash in known:
                 continue
             row = base_row(source, collected_at, r.status_code, content_hash, title, published_at, article_url)
+            row["image_url"] = image_url
+            row["image_rights_status"] = source.get("rights_status")
             row["raw_summary"] = "municipal_feed item"
             append(row)
             known.add(content_hash)
@@ -526,7 +557,7 @@ def main():
             collect_municipal_feed(source)
         else:
             print("SKIP unsupported mode", source["id"], mode)
-        time.sleep(1)
+        time.sleep(0.5)
 
 
 if __name__ == "__main__":
