@@ -1,225 +1,29 @@
 {
   "schema_version": 1,
   "adapter": "generic_municipal_news",
-  "defaults": {
-    "max_age_days": 7,
-    "rights_status": "reuse_needs_final_check",
-    "detail_date_fallback": false,
-    "detail_fetch_limit": 20,
-    "enabled": true
-  },
+  "defaults": {"max_age_days": 7, "rights_status": "reuse_needs_final_check", "detail_date_fallback": false, "detail_fetch_limit": 20, "enabled": true},
   "sources": [
-    {
-      "source_id": "kayseri_bb_news",
-      "province": "Kayseri",
-      "name": "Kayseri Büyükşehir Belediyesi",
-      "url": "https://www.kayseri.bel.tr/haberler",
-      "path_hints": ["/haberler/", "/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active",
-      "notes": "Listing exposes usable dates directly. Images remain disabled until separately rights-cleared."
-    },
-    {
-      "source_id": "adana_bb_news",
-      "province": "Adana",
-      "name": "Adana Büyükşehir Belediyesi",
-      "url": "https://www.adana.bel.tr/tr/haberler",
-      "path_hints": ["/tr/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active",
-      "notes": "Listing dates are parseable. Seven-day freshness gate is enforced before append. Images remain disabled."
-    },
-    {
-      "source_id": "eskisehir_bb_news",
-      "province": "Eskişehir",
-      "name": "Eskişehir Büyükşehir Belediyesi",
-      "url": "https://www.eskisehir.bel.tr/haberler",
-      "path_hints": ["/icerik-detay.php"],
-      "detail_date_fallback": true,
-      "detail_fetch_limit": 20,
-      "rights_status": "reuse_needs_final_check",
-      "status": "active",
-      "notes": "Listing lacks dates; collector fetches detail pages only for undated candidates. Images remain disabled."
-    },
-    {
-      "source_id": "gaziantep_bb_news",
-      "province": "Gaziantep",
-      "name": "Gaziantep Büyükşehir Belediyesi",
-      "url": "https://gaziantep.bel.tr/tr/haberler",
-      "path_hints": ["/tr/haber/", "/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "enabled": false,
-      "status": "paused_tls_chain",
-      "notes": "Official site is browser-reachable but fails certificate-chain validation on GitHub-hosted Python runners. TLS verification must not be disabled. Re-enable only after a clean official endpoint or fixed certificate chain is verified."
-    },
-    {
-      "source_id": "kocaeli_bb_news",
-      "province": "Kocaeli",
-      "name": "Kocaeli Büyükşehir Belediyesi",
-      "url": "https://www.kocaeli.bel.tr/haberler/",
-      "path_hints": ["/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active",
-      "notes": "Official listing exposes current timestamps and detail pages use /haber/...html. Main site states all rights reserved; no commercial reuse grant has been established. Images remain disabled."
-    },
-    {
-      "source_id": "ordu_bb_news",
-      "province": "Ordu",
-      "name": "Ordu Büyükşehir Belediyesi",
-      "url": "https://srv.ordu.bel.tr/haberler",
-      "path_hints": ["/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active",
-      "notes": "Official listing exposes current Turkish dates and detail pages use /haber/. No explicit commercial reuse grant for the exact news archive has been established. Images remain disabled."
-    },
-    {
-      "source_id": "manisa_bb_news",
-      "province": "Manisa",
-      "name": "Manisa Büyükşehir Belediyesi",
-      "url": "https://www.manisa.bel.tr/Haberler/",
-      "path_hints": ["/Haberler/", "/haberler/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active",
-      "notes": "Shared adapter validated in production with current 2026 items. Exact news-reuse license not established; images disabled."
-    },
-    {
-      "source_id": "balikesir_bb_news",
-      "province": "Balıkesir",
-      "name": "Balıkesir Büyükşehir Belediyesi",
-      "url": "https://balikesir.bel.tr/haberler",
-      "path_hints": ["/haberler/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active",
-      "notes": "Shared adapter validated in production. Site footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."
-    },
-    {
-      "source_id": "trabzon_bb_news",
-      "province": "Trabzon",
-      "name": "Trabzon Büyükşehir Belediyesi",
-      "url": "https://trabzon.bel.tr/",
-      "path_hints": ["/Web/HaberDetay", "/Haber/", "/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "enabled": false,
-      "status": "paused_adapter_mismatch",
-      "notes": "Official site is reachable but the generic municipal adapter parsed zero candidates in production. Keep paused until a second shared adapter/CMS family is implemented. Images disabled."
-    },
-    {
-      "source_id": "sakarya_bb_news",
-      "province": "Sakarya",
-      "name": "Sakarya Büyükşehir Belediyesi",
-      "url": "https://www.sakarya.bel.tr/tr/Haberler/1",
-      "path_hints": ["/tr/Haber/", "/tr/haber/"],
-      "detail_date_fallback": true,
-      "detail_fetch_limit": 20,
-      "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Listing produced 15 undated candidates in production. Detail-date fallback is enabled and resolved all 15 publication dates in the validation run. No explicit commercial reuse license found; images disabled."
-    },
-    {
-      "source_id": "sivas_bb_news",
-      "province": "Sivas",
-      "name": "Sivas Belediyesi",
-      "url": "https://www.sivas.bel.tr/haberler",
-      "path_hints": ["/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "enabled": false,
-      "status": "paused_tls_chain",
-      "notes": "Official site failed TLS certificate-chain validation on GitHub-hosted Python runners. TLS verification must not be disabled. Re-enable only after a clean official endpoint or fixed certificate chain is verified. Images disabled."
-    },
-    {
-      "source_id": "mersin_bb_news",
-      "province": "Mersin",
-      "name": "Mersin Büyükşehir Belediyesi",
-      "url": "https://www.mersin.bel.tr/haberler/1",
-      "path_hints": ["/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "enabled": false,
-      "status": "paused_http_403",
-      "notes": "Official listing returned HTTP 403 to the GitHub runner. Do not bypass access controls. Revisit only if an official automation-friendly endpoint becomes available. Images disabled."
-    },
-    {
-      "source_id": "tokat_bb_news",
-      "province": "Tokat",
-      "name": "Tokat Belediyesi",
-      "url": "https://tokat.bel.tr/haberler",
-      "path_hints": ["/haberler/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official listing exposes current 2026 dates directly and detail URLs use /haberler/<slug>. Footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."
-    },
-    {
-      "source_id": "yalova_bb_news",
-      "province": "Yalova",
-      "name": "Yalova Belediyesi",
-      "url": "https://yalova.bel.tr/haberler",
-      "path_hints": ["/haberler/"],
-      "detail_date_fallback": true,
-      "detail_fetch_limit": 20,
-      "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Production listing produced 15 undated candidates; detail-date fallback resolved all 15 dates, but all were outside the seven-day freshness window in validation. Images disabled."
-    },
-    {
-      "source_id": "duzce_bb_news",
-      "province": "Düzce",
-      "name": "Düzce Belediyesi",
-      "url": "https://www.duzce.bel.tr/haberler",
-      "path_hints": ["/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official listing exposes current 2026 dates and detail pages use /haber/<slug>. Footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."
-    },
-    {
-      "source_id": "denizli_bb_news",
-      "province": "Denizli",
-      "name": "Denizli Büyükşehir Belediyesi",
-      "url": "https://yeni.denizli.bel.tr/Default.aspx?k=haberlist",
-      "path_hints": ["k=haber-detay"],
-      "rights_status": "reuse_needs_final_check",
-      "enabled": false,
-      "status": "paused_adapter_mismatch",
-      "notes": "Official source is reachable, but the generic municipal adapter parsed zero candidates in production. Keep paused as an adapter-family candidate until a shared second adapter is implemented. Images disabled."
-    },
-    {
-      "source_id": "tekirdag_bb_news",
-      "province": "Tekirdağ",
-      "name": "Tekirdağ Büyükşehir Belediyesi",
-      "url": "https://tekirdag.bel.tr/",
-      "path_hints": ["/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "enabled": false,
-      "status": "paused_tls_chain",
-      "notes": "Official site failed TLS certificate-chain validation on GitHub-hosted Python runners. TLS verification must not be disabled. Re-enable only after the official certificate chain is fixed or a clean official endpoint is verified. Images disabled."
-    },
-    {
-      "source_id": "zonguldak_bb_news",
-      "province": "Zonguldak",
-      "name": "Zonguldak Belediyesi",
-      "url": "https://www.zonguldak.bel.tr/haberler",
-      "path_hints": ["/haberler/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official news archive exposes precise 2026 dates and detail URLs use /haberler/<slug>. No commercial reuse grant is assumed; images disabled."
-    },
-    {
-      "source_id": "mugla_bb_news",
-      "province": "Muğla",
-      "name": "Muğla Büyükşehir Belediyesi",
-      "url": "https://www.mugla.bel.tr/haberler/",
-      "path_hints": ["/haber/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official archive and homepage expose current August 2026 items with explicit dates; detail pages use /haber/<slug>. Footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."
-    },
-    {
-      "source_id": "rize_bel_duyurular",
-      "province": "Rize",
-      "name": "Rize Belediyesi",
-      "url": "https://www.rize.bel.tr/duyurular/tum",
-      "path_hints": ["/duyurular/"],
-      "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official municipal announcements include current dated local-service signals such as water outages and spraying schedules. Added as a municipal signal-source test; exact commercial reuse grant has not been established and images remain disabled."
-    }
+    {"source_id":"kayseri_bb_news","province":"Kayseri","name":"Kayseri Büyükşehir Belediyesi","url":"https://www.kayseri.bel.tr/haberler","path_hints":["/haberler/","/haber/"],"rights_status":"reuse_needs_final_check","status":"active","notes":"Listing exposes usable dates directly. Images remain disabled until separately rights-cleared."},
+    {"source_id":"adana_bb_news","province":"Adana","name":"Adana Büyükşehir Belediyesi","url":"https://www.adana.bel.tr/tr/haberler","path_hints":["/tr/haber/"],"rights_status":"reuse_needs_final_check","status":"active","notes":"Listing dates are parseable. Seven-day freshness gate is enforced before append. Images remain disabled."},
+    {"source_id":"eskisehir_bb_news","province":"Eskişehir","name":"Eskişehir Büyükşehir Belediyesi","url":"https://www.eskisehir.bel.tr/haberler","path_hints":["/icerik-detay.php"],"detail_date_fallback":true,"detail_fetch_limit":20,"rights_status":"reuse_needs_final_check","status":"active","notes":"Listing lacks dates; collector fetches detail pages only for undated candidates. Images remain disabled."},
+    {"source_id":"gaziantep_bb_news","province":"Gaziantep","name":"Gaziantep Büyükşehir Belediyesi","url":"https://gaziantep.bel.tr/tr/haberler","path_hints":["/tr/haber/","/haber/"],"rights_status":"reuse_needs_final_check","enabled":false,"status":"paused_tls_chain","notes":"Official site is browser-reachable but fails certificate-chain validation on GitHub-hosted Python runners. TLS verification must not be disabled. Re-enable only after a clean official endpoint or fixed certificate chain is verified."},
+    {"source_id":"kocaeli_bb_news","province":"Kocaeli","name":"Kocaeli Büyükşehir Belediyesi","url":"https://www.kocaeli.bel.tr/haberler/","path_hints":["/haber/"],"rights_status":"reuse_needs_final_check","status":"active","notes":"Official listing exposes current timestamps and detail pages use /haber/...html. Main site states all rights reserved; no commercial reuse grant has been established. Images remain disabled."},
+    {"source_id":"ordu_bb_news","province":"Ordu","name":"Ordu Büyükşehir Belediyesi","url":"https://srv.ordu.bel.tr/haberler","path_hints":["/haber/"],"rights_status":"reuse_needs_final_check","status":"active","notes":"Official listing exposes current Turkish dates and detail pages use /haber/. No explicit commercial reuse grant for the exact news archive has been established. Images remain disabled."},
+    {"source_id":"manisa_bb_news","province":"Manisa","name":"Manisa Büyükşehir Belediyesi","url":"https://www.manisa.bel.tr/Haberler/","path_hints":["/Haberler/","/haberler/"],"rights_status":"reuse_needs_final_check","status":"active","notes":"Shared adapter validated in production with current 2026 items. Exact news-reuse license not established; images disabled."},
+    {"source_id":"balikesir_bb_news","province":"Balıkesir","name":"Balıkesir Büyükşehir Belediyesi","url":"https://balikesir.bel.tr/haberler","path_hints":["/haberler/"],"rights_status":"reuse_needs_final_check","status":"active","notes":"Shared adapter validated in production. Site footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."},
+    {"source_id":"trabzon_bb_news","province":"Trabzon","name":"Trabzon Büyükşehir Belediyesi","url":"https://trabzon.bel.tr/","path_hints":["/Web/HaberDetay","/Haber/","/haber/"],"rights_status":"reuse_needs_final_check","enabled":false,"status":"paused_adapter_mismatch","notes":"Official site is reachable but the generic municipal adapter parsed zero candidates in production. Keep paused until a second shared adapter/CMS family is implemented. Images disabled."},
+    {"source_id":"sakarya_bb_news","province":"Sakarya","name":"Sakarya Büyükşehir Belediyesi","url":"https://www.sakarya.bel.tr/tr/Haberler/1","path_hints":["/tr/Haber/","/tr/haber/"],"detail_date_fallback":true,"detail_fetch_limit":20,"rights_status":"reuse_needs_final_check","status":"active_test","notes":"Listing produced 15 undated candidates in production. Detail-date fallback is enabled and resolved all 15 publication dates in the validation run. No explicit commercial reuse license found; images disabled."},
+    {"source_id":"sivas_bb_news","province":"Sivas","name":"Sivas Belediyesi","url":"https://www.sivas.bel.tr/haberler","path_hints":["/haber/"],"rights_status":"reuse_needs_final_check","enabled":false,"status":"paused_tls_chain","notes":"Official site failed TLS certificate-chain validation on GitHub-hosted Python runners. TLS verification must not be disabled. Re-enable only after a clean official endpoint or fixed certificate chain is verified. Images disabled."},
+    {"source_id":"mersin_bb_news","province":"Mersin","name":"Mersin Büyükşehir Belediyesi","url":"https://www.mersin.bel.tr/haberler/1","path_hints":["/haber/"],"rights_status":"reuse_needs_final_check","enabled":false,"status":"paused_http_403","notes":"Official listing returned HTTP 403 to the GitHub runner. Do not bypass access controls. Revisit only if an official automation-friendly endpoint becomes available. Images disabled."},
+    {"source_id":"tokat_bb_news","province":"Tokat","name":"Tokat Belediyesi","url":"https://tokat.bel.tr/haberler","path_hints":["/haberler/"],"rights_status":"reuse_needs_final_check","status":"active_test","notes":"Official listing exposes current 2026 dates directly and detail URLs use /haberler/<slug>. Footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."},
+    {"source_id":"yalova_bb_news","province":"Yalova","name":"Yalova Belediyesi","url":"https://yalova.bel.tr/haberler","path_hints":["/haberler/"],"detail_date_fallback":true,"detail_fetch_limit":20,"rights_status":"reuse_needs_final_check","status":"active_test","notes":"Production listing produced 15 undated candidates; detail-date fallback resolved all 15 dates, but all were outside the seven-day freshness window in validation. Images disabled."},
+    {"source_id":"duzce_bb_news","province":"Düzce","name":"Düzce Belediyesi","url":"https://www.duzce.bel.tr/haberler","path_hints":["/haber/"],"rights_status":"reuse_needs_final_check","status":"active_test","notes":"Official listing exposes current 2026 dates and detail pages use /haber/<slug>. Footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."},
+    {"source_id":"denizli_bb_news","province":"Denizli","name":"Denizli Büyükşehir Belediyesi","url":"https://yeni.denizli.bel.tr/Default.aspx?k=haberlist","path_hints":["k=haber-detay"],"rights_status":"reuse_needs_final_check","enabled":false,"status":"paused_adapter_mismatch","notes":"Official source is reachable, but the generic municipal adapter parsed zero candidates in production. Keep paused as an adapter-family candidate until a shared second adapter is implemented. Images disabled."},
+    {"source_id":"tekirdag_bb_news","province":"Tekirdağ","name":"Tekirdağ Büyükşehir Belediyesi","url":"https://tekirdag.bel.tr/","path_hints":["/haber/"],"rights_status":"reuse_needs_final_check","enabled":false,"status":"paused_tls_chain","notes":"Official site failed TLS certificate-chain validation on GitHub-hosted Python runners. TLS verification must not be disabled. Re-enable only after the official certificate chain is fixed or a clean official endpoint is verified. Images disabled."},
+    {"source_id":"zonguldak_bb_news","province":"Zonguldak","name":"Zonguldak Belediyesi","url":"https://www.zonguldak.bel.tr/haberler","path_hints":["/haberler/"],"rights_status":"reuse_needs_final_check","status":"active_test","notes":"Official news archive exposes precise 2026 dates and detail URLs use /haberler/<slug>. No commercial reuse grant is assumed; images disabled."},
+    {"source_id":"mugla_bb_news","province":"Muğla","name":"Muğla Büyükşehir Belediyesi","url":"https://www.mugla.bel.tr/haberler/","path_hints":["/haber/"],"rights_status":"reuse_needs_final_check","status":"active_test","notes":"Official archive and homepage expose current August 2026 items with explicit dates; detail pages use /haber/<slug>. Footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."},
+    {"source_id":"rize_bel_duyurular","province":"Rize","name":"Rize Belediyesi","url":"https://www.rize.bel.tr/duyurular/tum","path_hints":["/duyurular/"],"rights_status":"reuse_needs_final_check","status":"active_test","notes":"Official municipal announcements include current dated local-service signals such as water outages and spraying schedules. Added as a municipal signal-source test; exact commercial reuse grant has not been established and images remain disabled."},
+    {"source_id":"edirne_bel_news","province":"Edirne","name":"Edirne Belediyesi","url":"https://www.edirne.bel.tr/Gundem","path_hints":["/gundem/haberdetay","/Gundem/HaberDetay"],"rights_status":"reuse_needs_final_check","status":"active_test","notes":"Official news archive exposes current August 2026 items with explicit dates and detail pages use Gundem/HaberDetay. No explicit commercial reuse grant established; images disabled."},
+    {"source_id":"nigde_bel_news","province":"Niğde","name":"Niğde Belediyesi","url":"https://www.nigde.bel.tr/haberler","path_hints":["/"],"rights_status":"reuse_needs_final_check","status":"active_test","notes":"Official news archive exposes current August 2026 items with explicit dates. Detail pages use root-level slugs. Broad path hint is being tested against generic adapter; images disabled and no commercial reuse grant is assumed."}
   ]
 }
