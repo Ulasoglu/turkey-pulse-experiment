@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 INFILE = ROOT / "data" / "map_signals.jsonl"
 OUTFILE = ROOT / "data" / "clustered_events.jsonl"
-CLUSTER_VERSION = "event-cluster-v1"
+CLUSTER_VERSION = "event-cluster-v2-images"
 VISIBLE = {"SHOW", "REVIEW"}
 
 WINDOWS = {
@@ -131,6 +131,9 @@ def make_event(group):
         "titles": [text(r.get("title")) for r in group if text(r.get("title"))],
         "representative_source_id": rep.get("source_id"),
         "representative_url": rep.get("url"),
+        "rights_status": rep.get("rights_status"),
+        "image_url": rep.get("image_url"),
+        "venue": rep.get("venue"),
         "latitude": rep.get("latitude"),
         "longitude": rep.get("longitude"),
         "magnitude": rep.get("magnitude"),
