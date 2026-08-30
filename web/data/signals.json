@@ -273,6 +273,27 @@
     "depth_km": "12.67"
   },
   {
+    "id": "cluster_f9e67dc051cf",
+    "province": "Samsun",
+    "category": "EVENT",
+    "title": "AÇIK HAVA SİNEMA GECELERİ VEZİRKÖPRÜ",
+    "relevance": "MEDIUM",
+    "freshness": "NOW",
+    "published_at": "2026-08-26T20:00:00+00:00",
+    "source_id": "samsun_bb_events",
+    "source_url": "https://samsun.bel.tr/guncel/etkinlikler/acik-hava-sinema-geceleri-vezirkopru",
+    "rights_status": "reuse_needs_final_check",
+    "image_rights_status": "reuse_needs_final_check",
+    "image_url": null,
+    "venue": "Cumhuriyet Meydanı 26 Ağu • 20:00",
+    "latitude": null,
+    "longitude": null,
+    "signal_count": 2,
+    "source_count": 1,
+    "magnitude": null,
+    "depth_km": null
+  },
+  {
     "id": "cluster_7d6b55811534",
     "province": "İzmir",
     "category": "EVENT",
