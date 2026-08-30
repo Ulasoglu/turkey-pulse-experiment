@@ -13,8 +13,6 @@ import sys
 
 OUT = Path("data/ecmwf_probe.grib2")
 
-# Conservative first-pass thresholds. These are deliberately high because the
-# product should surface notable developments, not become a generic weather app.
 RAIN_NOTICE_MM = 15.0
 RAIN_HIGH_MM = 30.0
 WIND_NOTICE_KMH = 40.0
@@ -75,16 +73,33 @@ def read_fields(path):
     return fields
 
 
+def build_province_indices(field):
+    """Find each province's nearest grid point once and reuse it for all fields."""
+    import numpy as np
+    lats, lons, _ = field
+    lats = np.asarray(lats)
+    lons = np.asarray(lons)
+    lons = np.where(lons > 180, lons - 360, lons)
+    indices = {}
+    for province, (lat, lon) in PROVINCES.items():
+        distances = (lats - lat) ** 2 + (lons - lon) ** 2
+        indices[province] = int(np.argmin(distances))
+    return indices
+
+
+def value_at_index(field, index):
+    return float(field[2][index])
+
+
 def nearest_value(field, lat, lon):
+    """Compatibility helper for one-off lookups; production code should cache indices."""
+    import numpy as np
     lats, lons, vals = field
-    best_i, best_d = 0, float("inf")
-    for i, (la, lo) in enumerate(zip(lats, lons)):
-        if lo > 180:
-            lo -= 360
-        d = (la - lat) ** 2 + (lo - lon) ** 2
-        if d < best_d:
-            best_d, best_i = d, i
-    return float(vals[best_i])
+    lats = np.asarray(lats)
+    lons = np.asarray(lons)
+    lons = np.where(lons > 180, lons - 360, lons)
+    idx = int(np.argmin((lats - lat) ** 2 + (lons - lon) ** 2))
+    return float(vals[idx])
 
 
 def derive_signals(row):
@@ -119,7 +134,6 @@ def main():
     print("Request: latest IFS, +24h, 2t/10u/10v/tp")
     print("Licence: CC BY 4.0; attribution required")
     print("IMPORTANT: derived model signals; NOT official MGM warnings")
-    print(f"Thresholds: rain>={RAIN_NOTICE_MM}/{RAIN_HIGH_MM}mm, wind>={WIND_NOTICE_KMH}/{WIND_HIGH_KMH}km/h, heat>={HEAT_NOTICE_C}/{HEAT_HIGH_C}C, cold<={COLD_NOTICE_C}/{COLD_HIGH_C}C")
 
     try:
         client.retrieve(time=0, step=24, stream="oper", type="fc",
@@ -129,32 +143,28 @@ def main():
         return 1
 
     print(f"DOWNLOAD OK: {OUT} ({OUT.stat().st_size / 1024 / 1024:.2f} MiB)")
-    try:
-        fields = read_fields(OUT)
-    except Exception as exc:
-        print("GRIB DECODE FAILED:", repr(exc))
-        return 1
-
+    fields = read_fields(OUT)
     needed = {"2t", "10u", "10v", "tp"}
     print("Decoded fields:", sorted(fields))
     if not needed.issubset(fields):
         print("MISSING FIELDS:", sorted(needed - set(fields)))
         return 1
 
+    indices = build_province_indices(fields["2t"])
     rows = []
-    for province, (lat, lon) in PROVINCES.items():
-        temp_c = nearest_value(fields["2t"], lat, lon) - 273.15
-        u = nearest_value(fields["10u"], lat, lon)
-        v = nearest_value(fields["10v"], lat, lon)
+    for province in PROVINCES:
+        idx = indices[province]
+        temp_c = value_at_index(fields["2t"], idx) - 273.15
+        u = value_at_index(fields["10u"], idx)
+        v = value_at_index(fields["10v"], idx)
         wind_kmh = math.hypot(u, v) * 3.6
-        precip_mm = nearest_value(fields["tp"], lat, lon) * 1000.0
+        precip_mm = value_at_index(fields["tp"], idx) * 1000.0
         rows.append((province, temp_c, wind_kmh, precip_mm))
 
     print(f"PROVINCES DECODED: {len(rows)}/81")
     all_signals = [signal for row in rows for signal in derive_signals(row)]
     order = {"HIGH": 0, "NOTICE": 1}
     all_signals.sort(key=lambda s: (order[s[0]], s[1], s[2]))
-
     print("=== DERIVED WEATHER SIGNALS ===")
     if not all_signals:
         print("NONE: no province crosses the conservative thresholds")
@@ -162,13 +172,6 @@ def main():
         for severity, kind, province, value in all_signals:
             print(f"{severity} | {kind} | {province} | {value}")
     print(f"SIGNAL COUNT: {len(all_signals)} across {len(set(s[2] for s in all_signals))} provinces")
-
-    wettest = sorted(rows, key=lambda r: r[3], reverse=True)[:5]
-    windiest = sorted(rows, key=lambda r: r[2], reverse=True)[:5]
-    hottest = sorted(rows, key=lambda r: r[1], reverse=True)[:5]
-    print("TOP WET:", "; ".join(f"{r[0]} {r[3]:.1f}mm" for r in wettest))
-    print("TOP WIND:", "; ".join(f"{r[0]} {r[2]:.1f}km/h" for r in windiest))
-    print("TOP HOT:", "; ".join(f"{r[0]} {r[1]:.1f}C" for r in hottest))
     print("PROBE ONLY: no production weather signals written.")
     return 0
 
