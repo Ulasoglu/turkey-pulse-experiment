@@ -131,7 +131,7 @@
     "category": "EARTHQUAKE",
     "title": "ML 3 - Baskil (Elazığ)",
     "relevance": "MEDIUM",
-    "freshness": "NOW",
+    "freshness": "RECENT",
     "published_at": "2026-08-30T08:58:15",
     "source_id": "afad_event_service",
     "source_url": "https://deprem.afad.gov.tr/event-detail/727306",
