@@ -101,6 +101,36 @@
       "rights_status": "reuse_needs_final_check",
       "status": "active_test",
       "notes": "Official homepage exposes current news and dates. Site states all rights reserved; no general reuse grant established. Detail-path compatibility is intentionally being tested; images disabled."
+    },
+    {
+      "source_id": "sakarya_bb_news",
+      "province": "Sakarya",
+      "name": "Sakarya Büyükşehir Belediyesi",
+      "url": "https://www.sakarya.bel.tr/tr/Haberler/1",
+      "path_hints": ["/tr/Haber/", "/tr/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official current listing and detail pages are verified; detail URLs use /tr/Haber/<slug>/<id>. No explicit commercial reuse license for the exact news archive was found; images disabled."
+    },
+    {
+      "source_id": "sivas_bb_news",
+      "province": "Sivas",
+      "name": "Sivas Belediyesi",
+      "url": "https://www.sivas.bel.tr/haberler",
+      "path_hints": ["/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official current listing exposes Turkish dates and verified detail pages use /haber/<slug>. No explicit commercial reuse license for the exact news archive was found; images disabled."
+    },
+    {
+      "source_id": "mersin_bb_news",
+      "province": "Mersin",
+      "name": "Mersin Büyükşehir Belediyesi",
+      "url": "https://www.mersin.bel.tr/haberler/1",
+      "path_hints": ["/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official listing and detail structure are verified; detail pages use /haber/<slug>-<id>. Search indexing showed current-style relative and absolute timestamps, but exact news-reuse license was not found. Images disabled."
     }
   ]
 }
