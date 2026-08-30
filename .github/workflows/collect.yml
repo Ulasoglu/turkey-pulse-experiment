@@ -35,8 +35,8 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Probe ECMWF open weather data
-        run: python -u probe_ecmwf_open_data.py
+      - name: Collect ECMWF weather candidates
+        run: python -u collect_ecmwf_weather.py
 
       - name: Run collector
         run: python -u run_collector_guarded.py
@@ -61,7 +61,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/raw_signals.jsonl data/filtered_signals.jsonl data/map_signals.jsonl data/clustered_events.jsonl web/data/signals.json
+          git add data/raw_signals.jsonl data/filtered_signals.jsonl data/map_signals.jsonl data/clustered_events.jsonl data/ecmwf_weather_candidates.jsonl web/data/signals.json
           if git diff --cached --quiet; then
             echo "No new data to commit."
             exit 0
