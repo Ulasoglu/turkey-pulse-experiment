@@ -141,7 +141,7 @@
     "category": "EARTHQUAKE",
     "title": "MW 4.5 - Sevaster, Vlorë (Arnavutluk)",
     "relevance": "HIGH",
-    "freshness": "NOW",
+    "freshness": "RECENT",
     "published_at": "2026-08-29T22:35:19",
     "source_id": "afad_event_service",
     "source_url": "https://deprem.afad.gov.tr/apiv2/event/filter",
@@ -219,23 +219,6 @@
     "source_count": 1,
     "magnitude": "4.4",
     "depth_km": "15"
-  },
-  {
-    "id": "cluster_61b9a98cdd5b",
-    "province": "Tunceli",
-    "category": "EARTHQUAKE",
-    "title": "ML 3 - Pülümür (Tunceli)",
-    "relevance": "MEDIUM",
-    "freshness": "RECENT",
-    "published_at": "2026-08-29T02:37:23",
-    "source_id": "afad_event_service",
-    "source_url": "https://deprem.afad.gov.tr/apiv2/event/filter",
-    "latitude": "39.484",
-    "longitude": "40.14033",
-    "signal_count": 1,
-    "source_count": 1,
-    "magnitude": "3",
-    "depth_km": "7"
   },
   {
     "id": "cluster_7d6b55811534",
