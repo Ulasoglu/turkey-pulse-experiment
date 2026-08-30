@@ -18,7 +18,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_3631ae9e8791",
@@ -39,7 +48,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_422030d303f8",
@@ -60,7 +78,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_2589bf501ab5",
@@ -81,7 +108,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_31ff61e60210",
@@ -102,7 +138,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_d39b21867c3c",
@@ -123,16 +168,25 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
-    "id": "cluster_00fa52450844",
+    "id": "cluster_b61e747dd01f",
     "province": "Giresun",
     "category": "WEATHER",
     "title": "Giresun: Kuvvetli yağış ihtimali",
     "relevance": "HIGH",
     "freshness": "NOW",
-    "published_at": "2026-08-30T12:36:56+00:00",
+    "published_at": "2026-08-30T12:46:31+00:00",
     "source_id": "ecmwf_open_data_weather",
     "source_url": "https://www.ecmwf.int/en/forecasts/datasets/open-data",
     "rights_status": "open_license_verified",
@@ -144,16 +198,25 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": true,
+    "official_warning": false,
+    "model": "ECMWF IFS 0.25°",
+    "forecast_step_hours": 24,
+    "attribution": "ECMWF Open Data – CC BY 4.0",
+    "weather_kind": "HEAVY_RAIN",
+    "temperature_c": 23.7,
+    "wind_kmh": 20.2,
+    "precipitation_mm_24h": 24.0
   },
   {
-    "id": "cluster_bcca0c5ebd5b",
+    "id": "cluster_4f1be3f8f327",
     "province": "Ordu",
     "category": "WEATHER",
     "title": "Ordu: Kuvvetli yağış ihtimali",
     "relevance": "HIGH",
     "freshness": "NOW",
-    "published_at": "2026-08-30T12:36:56+00:00",
+    "published_at": "2026-08-30T12:46:31+00:00",
     "source_id": "ecmwf_open_data_weather",
     "source_url": "https://www.ecmwf.int/en/forecasts/datasets/open-data",
     "rights_status": "open_license_verified",
@@ -165,16 +228,25 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": true,
+    "official_warning": false,
+    "model": "ECMWF IFS 0.25°",
+    "forecast_step_hours": 24,
+    "attribution": "ECMWF Open Data – CC BY 4.0",
+    "weather_kind": "HEAVY_RAIN",
+    "temperature_c": 21.4,
+    "wind_kmh": 16.4,
+    "precipitation_mm_24h": 16.3
   },
   {
-    "id": "cluster_10cf94b88e00",
+    "id": "cluster_be61dcd2173f",
     "province": "Samsun",
     "category": "WEATHER",
     "title": "Samsun: Kuvvetli yağış ihtimali",
     "relevance": "HIGH",
     "freshness": "NOW",
-    "published_at": "2026-08-30T12:36:56+00:00",
+    "published_at": "2026-08-30T12:46:31+00:00",
     "source_id": "ecmwf_open_data_weather",
     "source_url": "https://www.ecmwf.int/en/forecasts/datasets/open-data",
     "rights_status": "open_license_verified",
@@ -186,7 +258,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": true,
+    "official_warning": false,
+    "model": "ECMWF IFS 0.25°",
+    "forecast_step_hours": 24,
+    "attribution": "ECMWF Open Data – CC BY 4.0",
+    "weather_kind": "HEAVY_RAIN",
+    "temperature_c": 18.4,
+    "wind_kmh": 7.1,
+    "precipitation_mm_24h": 22.7
   },
   {
     "id": "cluster_101eda7bbf87",
@@ -207,7 +288,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": "3",
-    "depth_km": "13.52"
+    "depth_km": "13.52",
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_2108b4f6398b",
@@ -228,7 +318,16 @@
     "signal_count": 3,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_e87dfaebed3e",
@@ -249,7 +348,16 @@
     "signal_count": 3,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_9ae63a87e5a3",
@@ -270,7 +378,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": "4.5",
-    "depth_km": "5.96"
+    "depth_km": "5.96",
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_2fd8f3b13fd3",
@@ -291,7 +408,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": "3.2",
-    "depth_km": "11.79"
+    "depth_km": "11.79",
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_4ce059ef59bf",
@@ -312,7 +438,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": "3",
-    "depth_km": "12.27"
+    "depth_km": "12.27",
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_d60add917c04",
@@ -333,7 +468,16 @@
     "signal_count": 3,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_7d6b55811534",
@@ -354,7 +498,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_fd25f854bd66",
@@ -375,7 +528,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_7110cf42ffa4",
@@ -396,7 +558,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_759037d633b9",
@@ -417,7 +588,16 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   },
   {
     "id": "cluster_a64009802e9a",
@@ -438,6 +618,15 @@
     "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
-    "depth_km": null
+    "depth_km": null,
+    "derived_signal": false,
+    "official_warning": false,
+    "model": null,
+    "forecast_step_hours": null,
+    "attribution": null,
+    "weather_kind": null,
+    "temperature_c": null,
+    "wind_kmh": null,
+    "precipitation_mm_24h": null
   }
 ]
