@@ -51,6 +51,26 @@
       "enabled": false,
       "status": "paused_tls_chain",
       "notes": "Official site is browser-reachable but fails certificate-chain validation on GitHub-hosted Python runners. TLS verification must not be disabled. Re-enable only after a clean official endpoint or fixed certificate chain is verified."
+    },
+    {
+      "source_id": "kocaeli_bb_news",
+      "province": "Kocaeli",
+      "name": "Kocaeli Büyükşehir Belediyesi",
+      "url": "https://www.kocaeli.bel.tr/haberler/",
+      "path_hints": ["/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active",
+      "notes": "Official listing exposes current timestamps and detail pages use /haber/...html. Main site states all rights reserved; no commercial reuse grant has been established. Images remain disabled."
+    },
+    {
+      "source_id": "ordu_bb_news",
+      "province": "Ordu",
+      "name": "Ordu Büyükşehir Belediyesi",
+      "url": "https://srv.ordu.bel.tr/haberler",
+      "path_hints": ["/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active",
+      "notes": "Official listing exposes current Turkish dates and detail pages use /haber/. No explicit commercial reuse grant for the exact news archive has been established. Images remain disabled."
     }
   ]
 }
