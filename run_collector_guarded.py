@@ -147,7 +147,6 @@ def collect_samsun_events(source):
             title_text = re.sub(r"^(?:Pazartesi|Salı|Çarşamba|Perşembe|Cuma|Cumartesi|Pazar)\s*[•·-]?\s*", "", title_text, flags=re.I)
             title_text = re.sub(r"^\d{1,2}:\d{2}\s*", "", title_text)
             title_text = re.sub(r"\s+Detayları İncele\s*$", "", title_text, flags=re.I).strip()
-            # Remove trailing province/venue only when markup exposes a distinct location element below.
             venue = None
             for node in anchor.find_all(["span", "p", "div"], recursive=True):
                 node_text = " ".join(node.get_text(" ", strip=True).split())
@@ -211,14 +210,14 @@ def collect_municipal_feed_fast(source):
                 heading = ds.find("h1") or ds.find("h2")
                 title = " ".join((heading.get_text(" ", strip=True) if heading else anchor.get_text(" ", strip=True)).split())
                 if title:
-                    items.append((title, collector.parse_date_tr(ds.get_text(" ", strip=True)[:4000]), article_url))
+                    items.append((title, collector.parse_date_tr(ds.get_text(" ", strip=True)[:4000]), article_url, collector.extract_page_image(ds, article_url)))
                 fetched += 1
             except Exception as exc:
                 print("AKOM detail error", article_url, exc, flush=True)
             time.sleep(0.1)
         cutoff = datetime.now(timezone.utc) - timedelta(days=7)
         new_count = 0
-        for title, published_at, article_url in items:
+        for title, published_at, article_url, image_url in items:
             if published_at:
                 try:
                     if datetime.fromisoformat(published_at) < cutoff:
@@ -229,6 +228,8 @@ def collect_municipal_feed_fast(source):
             if content_hash in known_hashes:
                 continue
             row = collector.base_row(source, collected_at, response.status_code, content_hash, title, published_at, article_url)
+            row["image_url"] = image_url
+            row["image_rights_status"] = source.get("rights_status")
             row["raw_summary"] = "municipal_feed item"
             collector.append(row)
             known_hashes.add(content_hash)
