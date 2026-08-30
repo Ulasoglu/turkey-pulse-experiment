@@ -1,9 +1,10 @@
 """ECMWF Open Data feasibility probe for Turkish province capitals.
 
-Downloads the latest IFS 24h forecast and decodes temperature, wind and
-precipitation at all 81 province-capital coordinates. This remains probe-only:
-no weather rows are written into the production signal pipeline.
+Downloads the latest IFS 24h forecast, decodes temperature, wind and
+precipitation at all 81 province-capital coordinates, then applies conservative
+probe-only thresholds for derived weather signals.
 
+IMPORTANT: these are model-derived signals, NOT official MGM warnings.
 Data licence: ECMWF Open Data, CC BY 4.0. Attribution required.
 """
 from pathlib import Path
@@ -12,8 +13,17 @@ import sys
 
 OUT = Path("data/ecmwf_probe.grib2")
 
-# Approximate province-capital coordinates. Forecast resolution is 0.25 degree,
-# so city-centre precision beyond a few decimals is not useful here.
+# Conservative first-pass thresholds. These are deliberately high because the
+# product should surface notable developments, not become a generic weather app.
+RAIN_NOTICE_MM = 15.0
+RAIN_HIGH_MM = 30.0
+WIND_NOTICE_KMH = 40.0
+WIND_HIGH_KMH = 60.0
+HEAT_NOTICE_C = 35.0
+HEAT_HIGH_C = 40.0
+COLD_NOTICE_C = -10.0
+COLD_HIGH_C = -20.0
+
 PROVINCES = {
     "Adana": (37.00, 35.32), "Adıyaman": (37.76, 38.28), "Afyonkarahisar": (38.76, 30.54),
     "Ağrı": (39.72, 43.05), "Aksaray": (38.37, 34.03), "Amasya": (40.65, 35.83),
@@ -45,10 +55,6 @@ PROVINCES = {
 }
 
 
-def nearest_index(values, target):
-    return min(range(len(values)), key=lambda i: abs(values[i] - target))
-
-
 def read_fields(path):
     from eccodes import codes_grib_new_from_file, codes_get, codes_get_array, codes_release
     fields = {}
@@ -59,10 +65,11 @@ def read_fields(path):
                 break
             try:
                 short = codes_get(gid, "shortName")
-                lats = codes_get_array(gid, "latitudes")
-                lons = codes_get_array(gid, "longitudes")
-                vals = codes_get_array(gid, "values")
-                fields[short] = (lats, lons, vals)
+                fields[short] = (
+                    codes_get_array(gid, "latitudes"),
+                    codes_get_array(gid, "longitudes"),
+                    codes_get_array(gid, "values"),
+                )
             finally:
                 codes_release(gid)
     return fields
@@ -70,10 +77,7 @@ def read_fields(path):
 
 def nearest_value(field, lat, lon):
     lats, lons, vals = field
-    # The downloaded regular grid is small enough for a probe. Find nearest
-    # grid point by squared distance, normalising longitudes if necessary.
-    best_i = 0
-    best_d = float("inf")
+    best_i, best_d = 0, float("inf")
     for i, (la, lo) in enumerate(zip(lats, lons)):
         if lo > 180:
             lo -= 360
@@ -81,6 +85,24 @@ def nearest_value(field, lat, lon):
         if d < best_d:
             best_d, best_i = d, i
     return float(vals[best_i])
+
+
+def derive_signals(row):
+    province, temp_c, wind_kmh, precip_mm = row
+    signals = []
+    if precip_mm >= RAIN_NOTICE_MM:
+        severity = "HIGH" if precip_mm >= RAIN_HIGH_MM else "NOTICE"
+        signals.append((severity, "HEAVY_RAIN", province, f"{precip_mm:.1f} mm/24h"))
+    if wind_kmh >= WIND_NOTICE_KMH:
+        severity = "HIGH" if wind_kmh >= WIND_HIGH_KMH else "NOTICE"
+        signals.append((severity, "STRONG_WIND", province, f"{wind_kmh:.1f} km/h"))
+    if temp_c >= HEAT_NOTICE_C:
+        severity = "HIGH" if temp_c >= HEAT_HIGH_C else "NOTICE"
+        signals.append((severity, "HEAT", province, f"{temp_c:.1f} C"))
+    if temp_c <= COLD_NOTICE_C:
+        severity = "HIGH" if temp_c <= COLD_HIGH_C else "NOTICE"
+        signals.append((severity, "COLD", province, f"{temp_c:.1f} C"))
+    return signals
 
 
 def main():
@@ -93,9 +115,11 @@ def main():
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     client = Client(source="ecmwf", model="ifs", resol="0p25", preserve_request_order=True)
-    print("=== ECMWF 81-PROVINCE WEATHER PROBE ===")
+    print("=== ECMWF 81-PROVINCE WEATHER SIGNAL PROBE ===")
     print("Request: latest IFS, +24h, 2t/10u/10v/tp")
     print("Licence: CC BY 4.0; attribution required")
+    print("IMPORTANT: derived model signals; NOT official MGM warnings")
+    print(f"Thresholds: rain>={RAIN_NOTICE_MM}/{RAIN_HIGH_MM}mm, wind>={WIND_NOTICE_KMH}/{WIND_HIGH_KMH}km/h, heat>={HEAT_NOTICE_C}/{HEAT_HIGH_C}C, cold<={COLD_NOTICE_C}/{COLD_HIGH_C}C")
 
     try:
         client.retrieve(time=0, step=24, stream="oper", type="fc",
@@ -111,8 +135,8 @@ def main():
         print("GRIB DECODE FAILED:", repr(exc))
         return 1
 
-    print("Decoded fields:", sorted(fields))
     needed = {"2t", "10u", "10v", "tp"}
+    print("Decoded fields:", sorted(fields))
     if not needed.issubset(fields):
         print("MISSING FIELDS:", sorted(needed - set(fields)))
         return 1
@@ -127,16 +151,24 @@ def main():
         rows.append((province, temp_c, wind_kmh, precip_mm))
 
     print(f"PROVINCES DECODED: {len(rows)}/81")
-    print("province | temp_C | wind_kmh | precip_mm(+24h cumulative)")
-    for province, temp_c, wind_kmh, precip_mm in rows:
-        print(f"{province} | {temp_c:.1f} | {wind_kmh:.1f} | {precip_mm:.1f}")
+    all_signals = [signal for row in rows for signal in derive_signals(row)]
+    order = {"HIGH": 0, "NOTICE": 1}
+    all_signals.sort(key=lambda s: (order[s[0]], s[1], s[2]))
 
-    hottest = sorted(rows, key=lambda r: r[1], reverse=True)[:5]
+    print("=== DERIVED WEATHER SIGNALS ===")
+    if not all_signals:
+        print("NONE: no province crosses the conservative thresholds")
+    else:
+        for severity, kind, province, value in all_signals:
+            print(f"{severity} | {kind} | {province} | {value}")
+    print(f"SIGNAL COUNT: {len(all_signals)} across {len(set(s[2] for s in all_signals))} provinces")
+
     wettest = sorted(rows, key=lambda r: r[3], reverse=True)[:5]
     windiest = sorted(rows, key=lambda r: r[2], reverse=True)[:5]
-    print("TOP HOT:", "; ".join(f"{r[0]} {r[1]:.1f}C" for r in hottest))
+    hottest = sorted(rows, key=lambda r: r[1], reverse=True)[:5]
     print("TOP WET:", "; ".join(f"{r[0]} {r[3]:.1f}mm" for r in wettest))
     print("TOP WIND:", "; ".join(f"{r[0]} {r[2]:.1f}km/h" for r in windiest))
+    print("TOP HOT:", "; ".join(f"{r[0]} {r[1]:.1f}C" for r in hottest))
     print("PROBE ONLY: no production weather signals written.")
     return 0
 
