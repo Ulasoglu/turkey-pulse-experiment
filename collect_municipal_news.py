@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "data" / "raw_signals.jsonl"
 TURKEY_TZ = timezone(timedelta(hours=3))
 HEADERS = {
-    "User-Agent": "TurkeyPulseFeasibilityExperiment/1.1 (+municipal news collector)",
+    "User-Agent": "TurkeyPulseFeasibilityExperiment/1.2 (+municipal news collector)",
     "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.7",
 }
 
@@ -48,6 +48,8 @@ class Source:
     path_hints: tuple[str, ...]
     max_age_days: int = 7
     rights_status: str = "reuse_needs_final_check"
+    detail_date_fallback: bool = False
+    detail_fetch_limit: int = 20
 
 
 # One shared adapter; new compatible municipalities are added here after probe + rights review.
@@ -69,6 +71,17 @@ SOURCES = [
         path_hints=("/tr/haber/",),
         max_age_days=7,
         rights_status="reuse_needs_final_check",
+    ),
+    Source(
+        source_id="eskisehir_bb_news",
+        province="Eskişehir",
+        name="Eskişehir Büyükşehir Belediyesi",
+        url="https://www.eskisehir.bel.tr/haberler",
+        path_hints=("/icerik-detay.php",),
+        max_age_days=7,
+        rights_status="reuse_needs_final_check",
+        detail_date_fallback=True,
+        detail_fetch_limit=20,
     ),
 ]
 
@@ -195,8 +208,17 @@ def extract_rows(source, html):
         if key in seen:
             continue
         seen.add(key)
-        rows.append({"title": title, "published": published, "url": absolute})
+        rows.append({"title": title, "published": published, "url": absolute, "date_source": "listing" if published else None})
     return rows
+
+
+def fetch_detail_date(item):
+    response = requests.get(item["url"], headers=HEADERS, timeout=(5, 20), allow_redirects=True)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, "html.parser")
+    text = clean(soup.get_text(" ", strip=True))
+    published = parse_date(text[:5000])
+    return published
 
 
 def collect(source):
@@ -204,6 +226,28 @@ def collect(source):
     response = requests.get(source.url, headers=HEADERS, timeout=(5, 25), allow_redirects=True)
     response.raise_for_status()
     candidates = extract_rows(source, response.text)
+
+    detail_fetched = detail_dated = detail_errors = 0
+    if source.detail_date_fallback:
+        for item in candidates:
+            if item["published"] is not None:
+                continue
+            if detail_fetched >= source.detail_fetch_limit:
+                break
+            detail_fetched += 1
+            try:
+                published = fetch_detail_date(item)
+                if published:
+                    item["published"] = published
+                    item["date_source"] = "detail"
+                    detail_dated += 1
+                else:
+                    print("DETAIL NO DATE", item["url"])
+            except Exception as exc:
+                detail_errors += 1
+                print(f"DETAIL ERROR {item['url']}: {type(exc).__name__}: {exc}")
+            time.sleep(0.15)
+
     cutoff = datetime.now(timezone.utc) - timedelta(days=source.max_age_days)
     known = existing_hashes(source.source_id)
     fresh = stale = undated = new_count = 0
@@ -233,6 +277,7 @@ def collect(source):
             "content_hash": content_hash,
             "title": item["title"],
             "published_at": published.isoformat(),
+            "published_at_source": item.get("date_source"),
             "latitude": None,
             "longitude": None,
             "magnitude": None,
@@ -246,7 +291,10 @@ def collect(source):
         new_count += 1
         print("NEW", published.date().isoformat(), item["title"])
 
-    print(f"parsed={len(candidates)} fresh={fresh} stale={stale} undated={undated} new={new_count}")
+    print(
+        f"parsed={len(candidates)} fresh={fresh} stale={stale} undated={undated} new={new_count} "
+        f"detail_fetched={detail_fetched} detail_dated={detail_dated} detail_errors={detail_errors}"
+    )
 
 
 def main():
