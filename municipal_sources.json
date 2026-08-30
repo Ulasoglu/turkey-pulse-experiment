@@ -79,8 +79,8 @@
       "url": "https://www.manisa.bel.tr/Haberler/",
       "path_hints": ["/Haberler/", "/haberler/"],
       "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official current listing exposes precise dates and fresh 2026 items. Exact news-reuse license not established; images disabled. Added as shared-adapter compatibility test."
+      "status": "active",
+      "notes": "Shared adapter validated in production with current 2026 items. Exact news-reuse license not established; images disabled."
     },
     {
       "source_id": "balikesir_bb_news",
@@ -89,8 +89,8 @@
       "url": "https://balikesir.bel.tr/haberler",
       "path_hints": ["/haberler/"],
       "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official current listing exposes dates and /haberler/... detail paths. Site footer states all rights reserved, so no commercial reuse grant is assumed; images disabled. Added as shared-adapter compatibility test."
+      "status": "active",
+      "notes": "Shared adapter validated in production. Site footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."
     },
     {
       "source_id": "trabzon_bb_news",
@@ -99,8 +99,9 @@
       "url": "https://trabzon.bel.tr/",
       "path_hints": ["/Web/HaberDetay", "/Haber/", "/haber/"],
       "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official homepage exposes current news and dates. Site states all rights reserved; no general reuse grant established. Detail-path compatibility is intentionally being tested; images disabled."
+      "enabled": false,
+      "status": "paused_adapter_mismatch",
+      "notes": "Official site is reachable but the generic municipal adapter parsed zero candidates in production. Keep paused until a second shared adapter/CMS family is implemented. Images disabled."
     },
     {
       "source_id": "sakarya_bb_news",
@@ -108,9 +109,11 @@
       "name": "Sakarya Büyükşehir Belediyesi",
       "url": "https://www.sakarya.bel.tr/tr/Haberler/1",
       "path_hints": ["/tr/Haber/", "/tr/haber/"],
+      "detail_date_fallback": true,
+      "detail_fetch_limit": 20,
       "rights_status": "reuse_needs_final_check",
       "status": "active_test",
-      "notes": "Official current listing and detail pages are verified; detail URLs use /tr/Haber/<slug>/<id>. No explicit commercial reuse license for the exact news archive was found; images disabled."
+      "notes": "Listing produced 15 undated candidates in production. Detail-date fallback is enabled to test whether the existing Eskişehir-style fallback resolves publication dates. No explicit commercial reuse license found; images disabled."
     },
     {
       "source_id": "sivas_bb_news",
@@ -119,8 +122,9 @@
       "url": "https://www.sivas.bel.tr/haberler",
       "path_hints": ["/haber/"],
       "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official current listing exposes Turkish dates and verified detail pages use /haber/<slug>. No explicit commercial reuse license for the exact news archive was found; images disabled."
+      "enabled": false,
+      "status": "paused_tls_chain",
+      "notes": "Official site failed TLS certificate-chain validation on GitHub-hosted Python runners. TLS verification must not be disabled. Re-enable only after a clean official endpoint or fixed certificate chain is verified. Images disabled."
     },
     {
       "source_id": "mersin_bb_news",
@@ -129,8 +133,9 @@
       "url": "https://www.mersin.bel.tr/haberler/1",
       "path_hints": ["/haber/"],
       "rights_status": "reuse_needs_final_check",
-      "status": "active_test",
-      "notes": "Official listing and detail structure are verified; detail pages use /haber/<slug>-<id>. Search indexing showed current-style relative and absolute timestamps, but exact news-reuse license was not found. Images disabled."
+      "enabled": false,
+      "status": "paused_http_403",
+      "notes": "Official listing returned HTTP 403 to the GitHub runner. Do not bypass access controls. Revisit only if an official automation-friendly endpoint becomes available. Images disabled."
     }
   ]
 }
