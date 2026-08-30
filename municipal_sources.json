@@ -113,7 +113,7 @@
       "detail_fetch_limit": 20,
       "rights_status": "reuse_needs_final_check",
       "status": "active_test",
-      "notes": "Listing produced 15 undated candidates in production. Detail-date fallback is enabled to test whether the existing Eskişehir-style fallback resolves publication dates. No explicit commercial reuse license found; images disabled."
+      "notes": "Listing produced 15 undated candidates in production. Detail-date fallback is enabled and resolved all 15 publication dates in the validation run. No explicit commercial reuse license found; images disabled."
     },
     {
       "source_id": "sivas_bb_news",
@@ -153,9 +153,11 @@
       "name": "Yalova Belediyesi",
       "url": "https://yalova.bel.tr/haberler",
       "path_hints": ["/haberler/"],
+      "detail_date_fallback": true,
+      "detail_fetch_limit": 20,
       "rights_status": "reuse_needs_final_check",
       "status": "active_test",
-      "notes": "Official news archive exposes dated 2026 items and detail URLs use /haberler/<slug>. No explicit commercial reuse license for the exact news archive has been established; images disabled."
+      "notes": "Production listing produced 15 undated candidates, so detail-date fallback is enabled for validation. No explicit commercial reuse license for the exact news archive has been established; images disabled."
     },
     {
       "source_id": "duzce_bb_news",
@@ -166,6 +168,36 @@
       "rights_status": "reuse_needs_final_check",
       "status": "active_test",
       "notes": "Official listing exposes current 2026 dates and detail pages use /haber/<slug>. Footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."
+    },
+    {
+      "source_id": "denizli_bb_news",
+      "province": "Denizli",
+      "name": "Denizli Büyükşehir Belediyesi",
+      "url": "https://yeni.denizli.bel.tr/Default.aspx?k=haberlist",
+      "path_hints": ["k=haber-detay"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official current news archive exposes precise 2026 dates; verified detail pages use Default.aspx?id=<id>&k=haber-detay. No explicit commercial news-reuse grant established; images disabled."
+    },
+    {
+      "source_id": "tekirdag_bb_news",
+      "province": "Tekirdağ",
+      "name": "Tekirdağ Büyükşehir Belediyesi",
+      "url": "https://tekirdag.bel.tr/",
+      "path_hints": ["/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official homepage exposes current 2026 dates and verified details use /haber/<id>. No explicit commercial news-reuse grant established; images disabled."
+    },
+    {
+      "source_id": "zonguldak_bb_news",
+      "province": "Zonguldak",
+      "name": "Zonguldak Belediyesi",
+      "url": "https://www.zonguldak.bel.tr/haberler",
+      "path_hints": ["/haberler/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official news archive exposes precise 2026 dates and detail URLs use /haberler/<slug>. No commercial reuse grant is assumed; images disabled."
     }
   ]
 }
