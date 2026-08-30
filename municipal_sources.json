@@ -136,6 +136,36 @@
       "enabled": false,
       "status": "paused_http_403",
       "notes": "Official listing returned HTTP 403 to the GitHub runner. Do not bypass access controls. Revisit only if an official automation-friendly endpoint becomes available. Images disabled."
+    },
+    {
+      "source_id": "tokat_bb_news",
+      "province": "Tokat",
+      "name": "Tokat Belediyesi",
+      "url": "https://tokat.bel.tr/haberler",
+      "path_hints": ["/haberler/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official listing exposes current 2026 dates directly and detail URLs use /haberler/<slug>. Footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."
+    },
+    {
+      "source_id": "yalova_bb_news",
+      "province": "Yalova",
+      "name": "Yalova Belediyesi",
+      "url": "https://yalova.bel.tr/haberler",
+      "path_hints": ["/haberler/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official news archive exposes dated 2026 items and detail URLs use /haberler/<slug>. No explicit commercial reuse license for the exact news archive has been established; images disabled."
+    },
+    {
+      "source_id": "duzce_bb_news",
+      "province": "Düzce",
+      "name": "Düzce Belediyesi",
+      "url": "https://www.duzce.bel.tr/haberler",
+      "path_hints": ["/haber/"],
+      "rights_status": "reuse_needs_final_check",
+      "status": "active_test",
+      "notes": "Official listing exposes current 2026 dates and detail pages use /haber/<slug>. Footer states all rights reserved, so no commercial reuse grant is assumed; images disabled."
     }
   ]
 }
