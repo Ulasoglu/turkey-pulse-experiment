@@ -18,9 +18,10 @@ from ecmwf.opendata import Client
 from probe_ecmwf_open_data import (
     PROVINCES,
     OUT,
+    build_province_indices,
     derive_signals,
-    nearest_value,
     read_fields,
+    value_at_index,
 )
 
 CANDIDATE_OUT = Path("data/ecmwf_weather_candidates.jsonl")
@@ -54,16 +55,18 @@ def build_candidates():
     if not needed.issubset(fields):
         raise RuntimeError(f"Missing ECMWF fields: {sorted(needed - set(fields))}")
 
+    indices = build_province_indices(fields["2t"])
     generated_at = datetime.now(timezone.utc)
     valid_at = generated_at.replace(microsecond=0)
     candidates = []
 
     for province, (lat, lon) in PROVINCES.items():
-        temp_c = nearest_value(fields["2t"], lat, lon) - 273.15
-        u = nearest_value(fields["10u"], lat, lon)
-        v = nearest_value(fields["10v"], lat, lon)
+        idx = indices[province]
+        temp_c = value_at_index(fields["2t"], idx) - 273.15
+        u = value_at_index(fields["10u"], idx)
+        v = value_at_index(fields["10v"], idx)
         wind_kmh = math.hypot(u, v) * 3.6
-        precip_mm = nearest_value(fields["tp"], lat, lon) * 1000.0
+        precip_mm = value_at_index(fields["tp"], idx) * 1000.0
         row = (province, temp_c, wind_kmh, precip_mm)
 
         for severity, kind, signal_province, value in derive_signals(row):
