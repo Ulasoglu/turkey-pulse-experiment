@@ -5,6 +5,15 @@
     "collection_interval_minutes": 60,
     "provinces": ["İstanbul", "Ankara", "İzmir", "Bursa", "Antalya", "Konya", "Samsun", "Çorum", "Malatya", "Bilecik", "Artvin", "Bayburt", "Ağrı", "Hakkâri", "Şırnak"]
   },
+  "rights_policy": {
+    "rule": "A source is green only when the exact source used by the collector is covered by explicit reuse terms. Data rights and image/media rights are evaluated separately.",
+    "image_export_rule": "Images are exported to the public web app only when image_rights_status is open_license_verified.",
+    "statuses": {
+      "open_license_verified": "Exact used source/content has explicit reusable/open license evidence.",
+      "reuse_needs_final_check": "Official/public source, but exact commercial reuse rights are not yet proven.",
+      "reuse_restricted": "Terms explicitly restrict the intended reuse."
+    }
+  },
   "sources": [
     {
       "id": "bursa_open_data_events",
@@ -13,10 +22,16 @@
       "source_type": "municipal_open_data_events",
       "url": "https://bapi.bursa.bel.tr/apigateway/acikveri/etkinlik",
       "rights_status": "open_license_verified",
+      "data_rights_status": "open_license_verified",
+      "image_rights_status": "reuse_needs_final_check",
+      "rights_evidence": [
+        "https://acikyesil.bursa.bel.tr/tr/license",
+        "https://acikyesil.bursa.bel.tr/tr/dataset/"
+      ],
       "mode": "bursa_events",
       "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": true},
       "enabled": true,
-      "notes": "Structured Bursa municipality events endpoint verified via Açık Yeşil CKAN package/resource discovery."
+      "notes": "Structured Bursa municipality events endpoint verified via Açık Yeşil. Dataset reuse is covered by Bursa Açık Veri Lisansı. Event poster/photo files can contain third-party creative rights, so image reuse stays blocked until specifically verified."
     },
     {
       "id": "izmir_open_data_events",
@@ -25,10 +40,17 @@
       "source_type": "municipal_open_data_events",
       "url": "https://openapi.izmir.bel.tr/api/ibb/kultursanat/etkinlikler",
       "rights_status": "open_license_verified",
+      "data_rights_status": "open_license_verified",
+      "image_rights_status": "reuse_needs_final_check",
+      "rights_evidence": [
+        "https://acikveri.bizizmir.com/tr/license",
+        "https://acikveri.bizizmir.com/tr/faq",
+        "https://acikveri.bizizmir.com/tr/dataset/kultur-sanat-etkinlikleri"
+      ],
       "mode": "izmir_events",
       "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": true},
       "enabled": true,
-      "notes": "Official İzmir Büyükşehir Belediyesi open-data API for current culture and arts events; portal states daily updates and an open-data license."
+      "notes": "Official İzmir open-data API. Portal explicitly permits commercial use and uses CC BY 4.0 unless otherwise stated. Linked event poster/photo files are hosted outside the open-data portal and may embed third-party rights, so public image reuse remains blocked pending exact verification."
     },
     {
       "id": "ankara_abb_culture_events",
@@ -38,10 +60,13 @@
       "url": "https://kultursanat.ankara.bel.tr/",
       "discovery_urls": ["https://kultursanat.ankara.bel.tr/", "https://kultursanat.ankara.bel.tr/ankara-etkinlikleri", "https://kultursanat.ankara.bel.tr/aylik-etkinlik-takvimi"],
       "rights_status": "reuse_needs_final_check",
+      "data_rights_status": "reuse_needs_final_check",
+      "image_rights_status": "reuse_needs_final_check",
+      "rights_evidence": ["https://seffaf.ankara.bel.tr/resources/images/hakkimizda/lisans.pdf"],
       "mode": "ankara_events",
       "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": false},
       "enabled": true,
-      "notes": "Official Ankara Büyükşehir Belediyesi culture/events website. HTML event pages are collected for feasibility only; reuse terms require final verification before commercial use."
+      "notes": "ABB has an open-data license on Şeffaf Ankara, but the collector currently reads kultursanat.ankara.bel.tr HTML. No evidence yet proves that exact culture site content is covered by the open-data license."
     },
     {
       "id": "konya_bb_events",
@@ -50,10 +75,13 @@
       "source_type": "municipal_official_events_html",
       "url": "https://www.konya.bel.tr/etkinlik",
       "rights_status": "reuse_needs_final_check",
+      "data_rights_status": "reuse_needs_final_check",
+      "image_rights_status": "reuse_needs_final_check",
+      "rights_evidence": ["https://acikveri.konya.bel.tr/"],
       "mode": "konya_events",
       "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": false},
       "enabled": true,
-      "notes": "Official Konya Büyükşehir Belediyesi event listing. Event title/date/detail links are present in server-rendered HTML. Site reuse terms require final verification before commercial use."
+      "notes": "Konya has an open-data portal, but the collector reads the municipality event HTML/culture pages. Exact reuse coverage for those pages is not yet proven."
     },
     {
       "id": "samsun_bb_events",
@@ -62,10 +90,13 @@
       "source_type": "municipal_official_events_html",
       "url": "https://samsun.bel.tr/guncel/etkinlikler",
       "rights_status": "reuse_needs_final_check",
+      "data_rights_status": "reuse_needs_final_check",
+      "image_rights_status": "reuse_needs_final_check",
+      "rights_evidence": [],
       "mode": "samsun_events",
       "freshness_policy": {"kind": "event", "max_started_days": 7, "require_not_ended": false},
       "enabled": true,
-      "notes": "Official Samsun Büyükşehir Belediyesi event listing. Server-rendered HTML exposes event date, time, title, location and direct detail links. Site states Her Hakkı Saklıdır; reuse requires final verification before commercial use."
+      "notes": "Official event listing. Server-rendered HTML is technically accessible, but exact reuse/commercial terms for the collected event content have not been verified."
     },
     {
       "id": "afad_event_service",
@@ -74,10 +105,13 @@
       "source_type": "national_emergency",
       "url": "https://deprem.afad.gov.tr/apiv2/event/filter",
       "rights_status": "reuse_needs_final_check",
+      "data_rights_status": "reuse_needs_final_check",
+      "image_rights_status": "reuse_needs_final_check",
+      "rights_evidence": ["https://deprem.afad.gov.tr/event-service"],
       "mode": "afad_events",
       "freshness_policy": {"kind": "earthquake", "lookback_hours": 24},
       "enabled": true,
-      "notes": "Official AFAD Event Web Service. Collector queries recent earthquake events as structured JSON. Reuse terms still require final verification before commercial use."
+      "notes": "Official AFAD Event Web Service documents machine-readable querying. A specific commercial reuse/open-data license for the event-service output has not yet been located, so reuse remains yellow."
     },
     {
       "id": "akom_istanbul_news",
@@ -86,10 +120,13 @@
       "source_type": "municipal_emergency_news",
       "url": "https://akom.ibb.istanbul/Haberler/",
       "rights_status": "reuse_needs_final_check",
+      "data_rights_status": "reuse_needs_final_check",
+      "image_rights_status": "reuse_needs_final_check",
+      "rights_evidence": [],
       "mode": "municipal_feed",
       "freshness_policy": {"kind": "news", "max_age_days": 7},
       "enabled": true,
-      "notes": "Official İBB AKOM news archive."
+      "notes": "Official İBB AKOM news archive. No exact AKOM reuse/license terms have yet been verified for automated commercial reuse or images. Do not infer terms from other İBB subdomains."
     },
     {
       "id": "izmir_bb_news",
@@ -98,10 +135,13 @@
       "source_type": "municipal_news",
       "url": "https://www.izmir.bel.tr/tr/HaberArsivi/21976?page=1",
       "rights_status": "reuse_needs_final_check",
+      "data_rights_status": "reuse_needs_final_check",
+      "image_rights_status": "reuse_needs_final_check",
+      "rights_evidence": [],
       "mode": "municipal_feed",
       "freshness_policy": {"kind": "news", "max_age_days": 7},
       "enabled": true,
-      "notes": "Official İzmir Büyükşehir Belediyesi news archive."
+      "notes": "Official municipality news archive, but it is not the İzmir Open Data Portal. The open-data CC BY statement is not automatically applied to izmir.bel.tr news pages or their images."
     }
   ],
   "province_source_status": {
