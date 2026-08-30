@@ -14,9 +14,10 @@ from bs4 import BeautifulSoup
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "data" / "raw_signals.jsonl"
+REGISTRY = ROOT / "municipal_sources.json"
 TURKEY_TZ = timezone(timedelta(hours=3))
 HEADERS = {
-    "User-Agent": "TurkeyPulseFeasibilityExperiment/1.2 (+municipal news collector)",
+    "User-Agent": "TurkeyPulseFeasibilityExperiment/1.3 (+municipal news collector)",
     "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.7",
 }
 
@@ -50,49 +51,45 @@ class Source:
     rights_status: str = "reuse_needs_final_check"
     detail_date_fallback: bool = False
     detail_fetch_limit: int = 20
+    enabled: bool = True
+    status: str = "active"
 
 
-# One shared adapter; new compatible municipalities are added here after probe + rights review.
-SOURCES = [
-    Source(
-        source_id="kayseri_bb_news",
-        province="Kayseri",
-        name="Kayseri Büyükşehir Belediyesi",
-        url="https://www.kayseri.bel.tr/haberler",
-        path_hints=("/haberler/", "/haber/"),
-        max_age_days=7,
-        rights_status="reuse_needs_final_check",
-    ),
-    Source(
-        source_id="adana_bb_news",
-        province="Adana",
-        name="Adana Büyükşehir Belediyesi",
-        url="https://www.adana.bel.tr/tr/haberler",
-        path_hints=("/tr/haber/",),
-        max_age_days=7,
-        rights_status="reuse_needs_final_check",
-    ),
-    Source(
-        source_id="eskisehir_bb_news",
-        province="Eskişehir",
-        name="Eskişehir Büyükşehir Belediyesi",
-        url="https://www.eskisehir.bel.tr/haberler",
-        path_hints=("/icerik-detay.php",),
-        max_age_days=7,
-        rights_status="reuse_needs_final_check",
-        detail_date_fallback=True,
-        detail_fetch_limit=20,
-    ),
-    Source(
-        source_id="gaziantep_bb_news",
-        province="Gaziantep",
-        name="Gaziantep Büyükşehir Belediyesi",
-        url="https://gaziantep.bel.tr/tr/haberler",
-        path_hints=("/tr/haber/", "/haber/"),
-        max_age_days=7,
-        rights_status="reuse_needs_final_check",
-    ),
-]
+def load_sources():
+    if not REGISTRY.exists():
+        raise RuntimeError(f"Missing municipal source registry: {REGISTRY}")
+    payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    defaults = payload.get("defaults") or {}
+    rows = payload.get("sources") or []
+    sources = []
+    seen = set()
+    for row in rows:
+        source_id = str(row.get("source_id") or "").strip()
+        province = str(row.get("province") or "").strip()
+        name = str(row.get("name") or "").strip()
+        url = str(row.get("url") or "").strip()
+        path_hints = tuple(str(value) for value in (row.get("path_hints") or []))
+        if not source_id or not province or not name or not url or not path_hints:
+            raise ValueError(f"Invalid municipal source registry row: {row}")
+        if source_id in seen:
+            raise ValueError(f"Duplicate municipal source_id: {source_id}")
+        seen.add(source_id)
+        sources.append(
+            Source(
+                source_id=source_id,
+                province=province,
+                name=name,
+                url=url,
+                path_hints=path_hints,
+                max_age_days=int(row.get("max_age_days", defaults.get("max_age_days", 7))),
+                rights_status=str(row.get("rights_status", defaults.get("rights_status", "reuse_needs_final_check"))),
+                detail_date_fallback=bool(row.get("detail_date_fallback", defaults.get("detail_date_fallback", False))),
+                detail_fetch_limit=int(row.get("detail_fetch_limit", defaults.get("detail_fetch_limit", 20))),
+                enabled=bool(row.get("enabled", defaults.get("enabled", True))),
+                status=str(row.get("status", "active")),
+            )
+        )
+    return sources
 
 
 def clean(value):
@@ -226,8 +223,7 @@ def fetch_detail_date(item):
     response.raise_for_status()
     soup = BeautifulSoup(response.text, "html.parser")
     text = clean(soup.get_text(" ", strip=True))
-    published = parse_date(text[:5000])
-    return published
+    return parse_date(text[:5000])
 
 
 def collect(source):
@@ -309,16 +305,23 @@ def collect(source):
 def main():
     print("=== GENERIC MUNICIPAL NEWS COLLECTOR ===")
     print("Images disabled unless separately rights-cleared.")
+    sources = load_sources()
+    enabled_sources = [source for source in sources if source.enabled]
+    disabled_sources = [source for source in sources if not source.enabled]
+    print(f"Registry: {len(sources)} configured, {len(enabled_sources)} enabled, {len(disabled_sources)} paused")
+    for source in disabled_sources:
+        print(f"SKIP {source.source_id}: status={source.status}")
+
     failures = 0
-    for source in SOURCES:
+    for source in enabled_sources:
         try:
             collect(source)
         except Exception as exc:
             failures += 1
             print(f"ERROR {source.source_id}: {type(exc).__name__}: {exc}")
         time.sleep(0.25)
-    if failures == len(SOURCES):
-        raise SystemExit("All municipal news sources failed")
+    if enabled_sources and failures == len(enabled_sources):
+        raise SystemExit("All enabled municipal news sources failed")
 
 
 if __name__ == "__main__":
