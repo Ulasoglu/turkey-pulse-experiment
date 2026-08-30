@@ -43,6 +43,8 @@
     image.className = "detail-hero-image";
     image.src = row.image_url;
     image.alt = row.title || "Gelişme görseli";
+    image.loading = "eager";
+    image.decoding = "async";
     image.referrerPolicy = "no-referrer";
     image.addEventListener("error", () => image.remove());
     title.insertAdjacentElement("afterend", image);
@@ -55,9 +57,14 @@
       if (row) addFeedImage(card, row);
     });
 
-    byTitle.forEach((row) => {
-      root.querySelectorAll?.(".detail-panel,.signal-detail,.detail-view,.mobile-detail,.modal,.overlay").forEach((container) => addDetailImage(container, row));
-    });
+    const detailContainers = [];
+    if (root.matches?.(".detail-overlay,.detail-card,.detail-panel,.signal-detail,.detail-view,.mobile-detail,.modal,.overlay")) detailContainers.push(root);
+    root.querySelectorAll?.(".detail-overlay,.detail-card,.detail-panel,.signal-detail,.detail-view,.mobile-detail,.modal,.overlay").forEach((container) => detailContainers.push(container));
+    for (const container of detailContainers) {
+      const titleNode = container.querySelector("h1,h2,h3");
+      const row = byTitle.get(key(titleNode?.textContent));
+      if (row) addDetailImage(container, row);
+    }
   }
 
   const observer = new MutationObserver((mutations) => {
