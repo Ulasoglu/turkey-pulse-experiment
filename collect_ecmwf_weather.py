@@ -1,15 +1,15 @@
-"""Staged ECMWF weather collector.
+"""ECMWF weather collector for Turkey Pulse.
 
-Creates candidate weather signals for all Turkish provinces from ECMWF Open
-Data, but deliberately writes them to a separate review file instead of the
-production raw signal stream. This lets us validate wording, thresholds and
-pipeline shape before public map integration.
+Downloads ECMWF IFS Open Data, derives conservative +24h weather signals for
+all Turkish province capitals and writes both a review file and guarded rows
+into the normal raw signal stream.
 
 These are model-derived signals, NOT official MGM warnings.
 Licence: ECMWF Open Data, CC BY 4.0. Attribution required.
 """
 from datetime import datetime, timezone
 from pathlib import Path
+import hashlib
 import json
 import math
 
@@ -25,6 +25,7 @@ from probe_ecmwf_open_data import (
 )
 
 CANDIDATE_OUT = Path("data/ecmwf_weather_candidates.jsonl")
+RAW_OUT = Path("data/raw_signals.jsonl")
 SOURCE_ID = "ecmwf_open_data_weather"
 SOURCE_NAME = "ECMWF Open Data (IFS)"
 SOURCE_URL = "https://www.ecmwf.int/en/forecasts/datasets/open-data"
@@ -36,6 +37,19 @@ TURKISH_LABELS = {
     "HEAT": "Aşırı sıcak ihtimali",
     "COLD": "Aşırı soğuk ihtimali",
 }
+
+
+def content_hash(item):
+    identity = "|".join([
+        SOURCE_ID,
+        item["province"],
+        item["weather_kind"],
+        str(item["forecast_step_hours"]),
+        str(item.get("precipitation_mm_24h")),
+        str(item.get("wind_kmh")),
+        str(item.get("temperature_c")),
+    ])
+    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
 
 
 def build_candidates():
@@ -56,8 +70,7 @@ def build_candidates():
         raise RuntimeError(f"Missing ECMWF fields: {sorted(needed - set(fields))}")
 
     indices = build_province_indices(fields["2t"])
-    generated_at = datetime.now(timezone.utc)
-    valid_at = generated_at.replace(microsecond=0)
+    generated_at = datetime.now(timezone.utc).replace(microsecond=0)
     candidates = []
 
     for province, (lat, lon) in PROVINCES.items():
@@ -86,7 +99,7 @@ def build_candidates():
                 "severity": severity,
                 "title": title,
                 "summary": summary,
-                "event_time": valid_at.isoformat(),
+                "event_time": generated_at.isoformat(),
                 "collected_at": generated_at.isoformat(),
                 "latitude": lat,
                 "longitude": lon,
@@ -99,25 +112,82 @@ def build_candidates():
                 "official_warning": False,
                 "attribution": ATTRIBUTION,
                 "rights_status": "open_license_verified",
-                "review_only": True,
+                "review_only": False,
             })
 
     return candidates
 
 
+def to_raw_row(item):
+    return {
+        "collected_at": item["collected_at"],
+        "source_id": SOURCE_ID,
+        "province": item["province"],
+        "source_type": "national_model_weather",
+        "rights_status": "open_license_verified",
+        "url": SOURCE_URL,
+        "http_status": 200,
+        "content_hash": content_hash(item),
+        "title": item["title"],
+        "published_at": item["collected_at"],
+        "latitude": item["latitude"],
+        "longitude": item["longitude"],
+        "magnitude": None,
+        "depth_km": None,
+        "event_id": None,
+        "raw_summary": item["summary"],
+        "weather_kind": item["weather_kind"],
+        "weather_severity": item["severity"],
+        "temperature_c": item["temperature_c"],
+        "wind_kmh": item["wind_kmh"],
+        "precipitation_mm_24h": item["precipitation_mm_24h"],
+        "model": item["model"],
+        "forecast_step_hours": item["forecast_step_hours"],
+        "derived_signal": True,
+        "official_warning": False,
+        "attribution": ATTRIBUTION,
+    }
+
+
+def merge_into_raw(candidates):
+    existing = []
+    if RAW_OUT.exists():
+        with RAW_OUT.open("r", encoding="utf-8") as fh:
+            for line in fh:
+                if not line.strip():
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if row.get("source_id") != SOURCE_ID:
+                    existing.append(row)
+
+    merged = existing + [to_raw_row(item) for item in candidates]
+    RAW_OUT.parent.mkdir(parents=True, exist_ok=True)
+    with RAW_OUT.open("w", encoding="utf-8") as fh:
+        for row in merged:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return len(existing), len(merged)
+
+
 def main():
-    print("=== ECMWF STAGED WEATHER COLLECTOR ===")
-    print("MODE: review-only; production raw signals are NOT modified")
+    print("=== ECMWF WEATHER COLLECTOR ===")
+    print("MODE: guarded production pipeline input")
     print("IMPORTANT: model-derived signals; NOT official MGM warnings")
     candidates = build_candidates()
+
     CANDIDATE_OUT.parent.mkdir(parents=True, exist_ok=True)
     with CANDIDATE_OUT.open("w", encoding="utf-8") as fh:
         for item in candidates:
             fh.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+    before, after = merge_into_raw(candidates)
     print(f"CANDIDATES: {len(candidates)}")
     for item in candidates:
         print(f"{item['severity']} | {item['weather_kind']} | {item['province']} | {item['title']}")
-    print(f"WROTE: {CANDIDATE_OUT}")
+    print(f"RAW MERGE: kept {before} non-ECMWF rows, wrote {after} total rows")
+    print(f"WROTE: {CANDIDATE_OUT} and {RAW_OUT}")
     return 0
 
 
