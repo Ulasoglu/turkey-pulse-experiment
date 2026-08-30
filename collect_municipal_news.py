@@ -61,6 +61,15 @@ SOURCES = [
         max_age_days=7,
         rights_status="reuse_needs_final_check",
     ),
+    Source(
+        source_id="adana_bb_news",
+        province="Adana",
+        name="Adana Büyükşehir Belediyesi",
+        url="https://www.adana.bel.tr/tr/haberler",
+        path_hints=("/tr/haber/",),
+        max_age_days=7,
+        rights_status="reuse_needs_final_check",
+    ),
 ]
 
 
