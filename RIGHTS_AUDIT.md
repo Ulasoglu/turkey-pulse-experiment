@@ -17,6 +17,23 @@ Policy: A source is green only when the **exact source used by the collector** h
 | İBB AKOM Haberler | YELLOW | YELLOW | The exact AKOM news archive is official and public. The reviewed AKOM page contains a copyright footer (`© 2024 - AKOM`) but no explicit reuse permission or license in the page navigation/footer. No terms were found that authorize automated commercial republication or image reuse. Do not import terms from unrelated İBB subdomains. |
 | İzmir Büyükşehir Belediyesi Haberler | YELLOW | YELLOW | The news archive is on `izmir.bel.tr`, not the Open Data portal. The Open Data portal's CC BY/open-data terms are not automatically extended to municipality news articles or their images. No exact commercial reuse permission verified yet. |
 
+## Candidate sources checked but not approved
+
+### MGM MeteoUYARI
+
+**Decision for the zero-euro product path: RED / do not integrate as a scraped or republished source without permission or a paid/licensed arrangement.**
+
+The official MeteoUYARI pages provide province/district warning status for today and tomorrow, so technically the data would be an excellent nationwide layer. However, MGM's exact website terms state that site information may not be modified, copied, reproduced, translated, republished, uploaded, transmitted, presented or distributed without prior permission and attribution. The site footer also states `Her Hakkı Saklıdır` (all rights reserved). This is not an open-data license.
+
+MGM also offers a dedicated **Meteo Uyarı Servisi (Web Servis)** as a priced product. The official 2026 proposed unit-price list shows item `MY-57 Meteo Uyarı Servisi (Web Servis)` at **12,500 TL**. This confirms that the machine-readable warning service is treated as a commercial data product rather than a zero-euro open feed.
+
+Evidence:
+- https://www.mgm.gov.tr/meteouyari/meteouyari-nedir.aspx
+- https://www.mgm.gov.tr/site/yasal-uyari.aspx
+- https://www.mgm.gov.tr/site/urunler/veri-islem-fiyatlar-2026.pdf
+
+Operational consequence: keep MGM out of the current production-safe collector list. We may link users to MGM where useful, but we should not scrape/republish MeteoUYARI as our own nationwide layer unless MGM grants permission or we later decide to license the service.
+
 ## Operational rules
 
 1. **GREEN data** may feed Turkey Pulse summaries/maps with required attribution.
@@ -25,6 +42,7 @@ Policy: A source is green only when the **exact source used by the collector** h
 4. A license on another portal/subdomain is not inherited automatically.
 5. If a page contains third-party artist, agency, photographer or partner content, assume separate rights may exist even when the surrounding dataset is open.
 6. For AFAD earthquake data, always show AFAD attribution and an original-source link.
+7. **RED candidate sources** are not added to the public production pipeline unless the restriction is resolved by explicit permission or licensing.
 
 ## Next verification targets
 
@@ -34,3 +52,4 @@ Policy: A source is green only when the **exact source used by the collector** h
 - Find explicit AKOM / İBB terms governing news text, automated access and media.
 - Find explicit `izmir.bel.tr` news-site terms rather than relying on the separate Open Data portal.
 - For Bursa/İzmir event images, verify whether poster/photo assets themselves are licensed or contain third-party rights before re-enabling public display.
+- Search for a different nationwide weather/hazard source with an explicit open/commercial reuse license instead of MGM MeteoUYARI.
