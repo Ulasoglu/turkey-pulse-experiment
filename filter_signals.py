@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent
 RAW = ROOT / "data" / "raw_signals.jsonl"
 OUT = ROOT / "data" / "filtered_signals.jsonl"
 MANIFEST = ROOT / "sources.json"
-FILTER_VERSION = "rules-v7-central-freshness"
+FILTER_VERSION = "rules-v8-ecmwf-guard"
 
 GENERIC_DROP_TITLES = {"haberler", "haber", "duyurular"}
 HIGH_SIGNAL_TERMS = {"uyarı","sağanak","yağış","fırtına","kuvvetli rüzgâr","kuvvetli rüzgar","aşırı sıcak","sıcaklık","yangın","kapatıldı","kapalı","ulaşım","trafik","yol","cadde","sokak","köprü","tünel","istasyon","metro","tramvay","izban","otobüs","vapur","sefer","altyapı","yenileme","elektrik kesintisi","su kesintisi","doğalgaz","arıza","ücretsiz","indirimli"}
@@ -72,6 +72,13 @@ def classify(row, policies, now=None):
     source_id = text(row.get("source_id")); title = text(row.get("title")); title_n = normalize(title); summary = normalize(row.get("raw_summary"))
     if summary.startswith("error:"): return "DROP", "collector_error"
     if source_id == "bursa_acik_yesil_catalog": return "DROP", "legacy_page_watch_not_event"
+
+    if source_id == "ecmwf_open_data_weather":
+        if row.get("derived_signal") is not True: return "DROP", "ecmwf_not_derived_signal"
+        if row.get("official_warning") is not False: return "DROP", "ecmwf_official_warning_guard"
+        if text(row.get("rights_status")) != "open_license_verified": return "DROP", "ecmwf_rights_guard"
+        if text(row.get("weather_kind")) not in {"HEAVY_RAIN", "STRONG_WIND", "HEAT", "COLD"}: return "DROP", "ecmwf_unknown_weather_kind"
+        return "KEEP", "ecmwf_threshold_signal"
 
     fresh = freshness_decision(row, policies.get(source_id, {}), now)
     if fresh is not None: return fresh
