@@ -104,14 +104,19 @@
       "name": "AFAD Event Service",
       "source_type": "national_emergency",
       "url": "https://deprem.afad.gov.tr/apiv2/event/filter",
-      "rights_status": "reuse_needs_final_check",
-      "data_rights_status": "reuse_needs_final_check",
+      "rights_status": "open_license_verified",
+      "data_rights_status": "open_license_verified",
       "image_rights_status": "reuse_needs_final_check",
-      "rights_evidence": ["https://deprem.afad.gov.tr/event-service"],
+      "rights_evidence": [
+        "https://deprem.afad.gov.tr/event-service",
+        "https://deprem.afad.gov.tr/tr/",
+        "https://deprem.afad.gov.tr/earthquake-reports"
+      ],
+      "attribution_required": "Afet ve Acil Durum Yönetimi Başkanlığı (AFAD) – Türkiye Deprem Veri Merkezi Sistemi",
       "mode": "afad_events",
       "freshness_policy": {"kind": "earthquake", "lookback_hours": 24},
       "enabled": true,
-      "notes": "Official AFAD Event Web Service documents machine-readable querying. A specific commercial reuse/open-data license for the event-service output has not yet been located, so reuse remains yellow."
+      "notes": "Official AFAD Event Web Service. AFAD's earthquake site explicitly instructs users to use data, maps and information obtained from the site by referring to AFAD / the Turkish Earthquake Data Center System Regulation. Structured earthquake event data is therefore treated as reusable with mandatory attribution. This does not clear AFAD photos or other media for reuse."
     },
     {
       "id": "akom_istanbul_news",
