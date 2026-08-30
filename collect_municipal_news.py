@@ -83,6 +83,15 @@ SOURCES = [
         detail_date_fallback=True,
         detail_fetch_limit=20,
     ),
+    Source(
+        source_id="gaziantep_bb_news",
+        province="Gaziantep",
+        name="Gaziantep Büyükşehir Belediyesi",
+        url="https://gaziantep.bel.tr/tr/haberler",
+        path_hints=("/tr/haber/", "/haber/"),
+        max_age_days=7,
+        rights_status="reuse_needs_final_check",
+    ),
 ]
 
 
