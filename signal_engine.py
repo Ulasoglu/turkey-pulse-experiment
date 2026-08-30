@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
 INFILE=ROOT/"data"/"filtered_signals.jsonl"; OUTFILE=ROOT/"data"/"map_signals.jsonl"; MANIFEST=ROOT/"sources.json"
-ENGINE_VERSION="signal-engine-v5-policy-events"
+ENGINE_VERSION="signal-engine-v6-ecmwf-weather"
 CATEGORY_RULES=[("WEATHER",{"uyarı","sağanak","yağış","fırtına","rüzgâr","rüzgar","sıcak","sıcaklık"}),("TRAFFIC",{"trafik","ulaşım","yol","cadde","sokak","köprü","tünel","istasyon","metro","tramvay","izban","otobüs","vapur","sefer"}),("UTILITY",{"elektrik kesintisi","su kesintisi","doğalgaz","arıza"}),("EVENT",{"etkinlik","festival","konser","kutlanacak","coşkusu","bayram","sergi","ücretsiz","indirimli"}),("INFRASTRUCTURE",{"altyapı","yenileme","proje","inşaat"})]
 HIGH_RELEVANCE_TERMS={"uyarı","kapatıldı","kesintisi","arıza","trafik","ulaşım","deprem","yangın","sağanak","fırtına","yağış"}
 MEDIUM_RELEVANCE_TERMS={"etkinlik","festival","konser","bayram","ücretsiz","indirimli","yenileme","altyapı","proje"}
@@ -37,12 +37,16 @@ def source_is_event(row,policies):
 def detect_category(row,policies):
     sid=text(row.get("source_id")); title=normalize(row.get("title"))
     if sid=="afad_event_service":return "EARTHQUAKE"
+    if sid=="ecmwf_open_data_weather" and row.get("derived_signal") is True:return "WEATHER"
     if source_is_event(row,policies):return "EVENT"
     for category,terms in CATEGORY_RULES:
         if has_any(title,terms):return category
     return "OTHER"
 
 def detect_relevance(row,category,policies):
+    sid=text(row.get("source_id"))
+    if sid=="ecmwf_open_data_weather" and category=="WEATHER":
+        return "HIGH" if text(row.get("filter_decision"))=="KEEP" else "LOW"
     if source_is_event(row,policies):return "MEDIUM"
     title=normalize(row.get("title"))
     if category=="EARTHQUAKE":
