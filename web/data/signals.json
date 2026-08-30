@@ -136,6 +136,23 @@
     "depth_km": null
   },
   {
+    "id": "cluster_9ae63a87e5a3",
+    "province": "Çanakkale",
+    "category": "EARTHQUAKE",
+    "title": "MW 4.5 - Sevaster, Vlorë (Arnavutluk)",
+    "relevance": "HIGH",
+    "freshness": "NOW",
+    "published_at": "2026-08-29T22:35:19",
+    "source_id": "afad_event_service",
+    "source_url": "https://deprem.afad.gov.tr/apiv2/event/filter",
+    "latitude": "40.3585",
+    "longitude": "19.71717",
+    "signal_count": 1,
+    "source_count": 1,
+    "magnitude": "4.5",
+    "depth_km": "5.96"
+  },
+  {
     "id": "cluster_2fd8f3b13fd3",
     "province": "Balıkesir",
     "category": "EARTHQUAKE",
@@ -187,23 +204,6 @@
     "depth_km": "12.67"
   },
   {
-    "id": "cluster_d9486dafee98",
-    "province": "Bursa",
-    "category": "EVENT",
-    "title": "Gastronomi Kongresi",
-    "relevance": "MEDIUM",
-    "freshness": "NOW",
-    "published_at": "2026-08-29T08:00:00+00:00",
-    "source_id": "bursa_open_data_events",
-    "source_url": "https://bapi.bursa.bel.tr/apigateway/acikveri/etkinlik",
-    "latitude": null,
-    "longitude": null,
-    "signal_count": 1,
-    "source_count": 1,
-    "magnitude": null,
-    "depth_km": null
-  },
-  {
     "id": "cluster_6baf3fe50075",
     "province": "Hakkari",
     "category": "EARTHQUAKE",
@@ -236,23 +236,6 @@
     "source_count": 1,
     "magnitude": "3",
     "depth_km": "7"
-  },
-  {
-    "id": "cluster_260efcb67661",
-    "province": "Balıkesir",
-    "category": "EARTHQUAKE",
-    "title": "ML 3 - Sındırgı (Balıkesir)",
-    "relevance": "MEDIUM",
-    "freshness": "RECENT",
-    "published_at": "2026-08-28T23:28:34",
-    "source_id": "afad_event_service",
-    "source_url": "https://deprem.afad.gov.tr/apiv2/event/filter",
-    "latitude": "39.19833",
-    "longitude": "28.107",
-    "signal_count": 1,
-    "source_count": 1,
-    "magnitude": "3",
-    "depth_km": "11.27"
   },
   {
     "id": "cluster_7d6b55811534",
