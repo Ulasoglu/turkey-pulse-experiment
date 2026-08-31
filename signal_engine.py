@@ -12,17 +12,17 @@ OUTFILE = ROOT / "data" / "map_signals.jsonl"
 CORE_MANIFEST = ROOT / "sources.json"
 MUNICIPAL_MANIFEST = ROOT / "municipal_sources.json"
 MUNICIPAL_OVERRIDES = ROOT / "municipal_sources_overrides.json"
-ENGINE_VERSION = "signal-engine-v7-municipal-registry"
+ENGINE_VERSION = "signal-engine-v8-category-quality"
 
 CATEGORY_RULES = [
     ("WEATHER", {"uyarı", "sağanak", "yağış", "fırtına", "rüzgâr", "rüzgar", "sıcak", "sıcaklık", "sel", "taşkın", "heyelan"}),
     ("TRAFFIC", {"trafik", "ulaşım", "yol", "cadde", "sokak", "köprü", "tünel", "istasyon", "metro", "tramvay", "izban", "otobüs", "vapur", "sefer"}),
     ("UTILITY", {"elektrik kesintisi", "su kesintisi", "doğalgaz", "arıza", "kesinti"}),
-    ("EVENT", {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "başvuru", "kayıt", "ücretsiz", "indirimli"}),
-    ("INFRASTRUCTURE", {"altyapı", "yenileme", "bakım", "onarım", "asfalt", "kanalizasyon", "inşaat", "proje"}),
+    ("INFRASTRUCTURE", {"altyapı", "yenileme", "bakım", "onarım", "asfalt", "kanalizasyon", "inşaat", "proje", "genişletme"}),
+    ("EVENT", {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "gösteri", "söyleşi", "atölye"}),
 ]
 HIGH_RELEVANCE_TERMS = {"uyarı", "kapatıldı", "kapatılacak", "kesintisi", "kesinti", "arıza", "trafik", "ulaşım", "deprem", "yangın", "sağanak", "fırtına", "yağış", "sel", "taşkın", "heyelan"}
-MEDIUM_RELEVANCE_TERMS = {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "başvuru", "kayıt", "ücretsiz", "indirimli", "yenileme", "altyapı", "bakım", "onarım", "asfalt", "kanalizasyon", "proje"}
+MEDIUM_RELEVANCE_TERMS = {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "yenileme", "altyapı", "bakım", "onarım", "asfalt", "kanalizasyon", "proje", "başvuru", "kayıt", "destek", "yardım", "burs"}
 LIFETIMES = {
     "EARTHQUAKE": timedelta(hours=24),
     "WEATHER": timedelta(hours=24),
@@ -30,7 +30,7 @@ LIFETIMES = {
     "UTILITY": timedelta(hours=24),
     "EVENT": timedelta(days=7),
     "INFRASTRUCTURE": timedelta(days=7),
-    "OTHER": timedelta(hours=24),
+    "OTHER": timedelta(days=3),
 }
 NOW_WINDOWS = {
     "EARTHQUAKE": timedelta(hours=3),
@@ -39,7 +39,7 @@ NOW_WINDOWS = {
     "UTILITY": timedelta(hours=6),
     "EVENT": timedelta(hours=24),
     "INFRASTRUCTURE": timedelta(hours=24),
-    "OTHER": timedelta(hours=6),
+    "OTHER": timedelta(hours=24),
 }
 
 
@@ -126,8 +126,14 @@ def detect_category(row, policies):
         return "WEATHER"
     if source_is_event(row, policies):
         return "EVENT"
+
+    if filter_reason.startswith(("active_local_impact:", "municipal_local_impact:")):
+        return "INFRASTRUCTURE"
     if filter_reason.startswith("public_event:"):
         return "EVENT"
+    if filter_reason.startswith("municipal_service:"):
+        return "OTHER"
+
     for category, terms in CATEGORY_RULES:
         if has_any(title, terms):
             return category
@@ -147,7 +153,7 @@ def detect_relevance(row, category, policies):
         return "HIGH"
     if filter_reason.startswith("public_event:"):
         return "MEDIUM"
-    if filter_reason.startswith("municipal_local_impact:"):
+    if filter_reason.startswith(("active_local_impact:", "municipal_local_impact:", "municipal_service:")):
         return "MEDIUM"
 
     title = normalize(row.get("title"))
@@ -193,6 +199,8 @@ def freshness(row, category, now, policies):
     occurred = parse_iso(row.get("published_at")) or parse_iso(row.get("collected_at"))
     if occurred is None:
         return "UNKNOWN", None, None
+    if occurred > now + timedelta(hours=6):
+        return "UNKNOWN", None, None
     age = max(now - occurred, timedelta(0))
     expires = occurred + LIFETIMES[category]
     if now >= expires:
@@ -201,13 +209,17 @@ def freshness(row, category, now, policies):
 
 
 def decide(row, category, relevance, fresh):
-    if text(row.get("filter_decision")) == "DROP" or fresh == "OLD":
+    filter_decision = text(row.get("filter_decision"))
+    filter_reason = text(row.get("filter_reason"))
+    if filter_decision == "DROP" or fresh == "OLD":
         return "HIDE"
     if fresh == "UNKNOWN":
         return "REVIEW" if relevance in {"HIGH", "MEDIUM"} else "HIDE"
     if category == "EARTHQUAKE" and relevance in {"HIGH", "MEDIUM"}:
         return "SHOW"
     if category == "EVENT" and relevance in {"HIGH", "MEDIUM"}:
+        return "SHOW"
+    if filter_reason.startswith("municipal_service:") and filter_decision == "KEEP":
         return "SHOW"
     if relevance == "HIGH" and fresh in {"NOW", "RECENT"}:
         return "SHOW"
