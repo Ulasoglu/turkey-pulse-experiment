@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "overrides": [
+    {
+      "source_id": "isparta_bel_news",
+      "enabled": true,
+      "status": "active_adapter2_heading",
+      "adapter2_strategy": "heading_link",
+      "notes": "Adapter 2 probe run 4 validated 7/7 dated official heading-link items, including current 26-30 August 2026 posts. Filter and quality gate remain responsible for dropping retrospective or low-value items. Images disabled; exact commercial reuse grant not established."
+    },
+    {
+      "source_id": "bolu_bel_news",
+      "enabled": true,
+      "status": "active_adapter2_wordpress",
+      "adapter2_strategy": "wordpress_api",
+      "notes": "Adapter 2 probe run 4 confirmed the official WordPress API returns 10 dated posts. The HTML page overmatches static administration pages, so production uses the WordPress API only. Images disabled; exact commercial reuse grant not established."
+    },
+    {
+      "source_id": "kirsehir_bel_news",
+      "enabled": false,
+      "status": "paused_adapter2_no_candidates",
+      "notes": "Adapter 2 probe run 4 reached the official archive with HTTP 200 but found zero candidates with the tested read-only strategies."
+    },
+    {
+      "source_id": "kutahya_bel_news",
+      "enabled": false,
+      "status": "paused_connection_reset",
+      "notes": "Adapter 2 probe run 4 failed with a connection reset from the official site. Do not bypass or add aggressive retries; keep paused until the source becomes stable."
+    },
+    {
+      "source_id": "elazig_bel_news",
+      "enabled": false,
+      "status": "paused_adapter2_ambiguous_detail_date",
+      "notes": "Adapter 2 probe run 4 found 39 candidates, but most resolved dates came from broad detail text and produced implausible old dates on otherwise current-looking posts. Two JSON-LD dates were for photo-gallery pages. Keep paused until a news-scoped explicit publication date source is identified."
+    },
+    {
+      "source_id": "nevsehir_bel_news",
+      "enabled": true,
+      "status": "active_adapter2_semantic",
+      "adapter2_strategy": "semantic_card",
+      "adapter2_url_hints": ["/haber-detay/"],
+      "notes": "Adapter 2 probe run 4 found 19 candidates with 18 dates; the news-card shape is clean and current. Production is restricted to /haber-detay/ URLs to avoid unrelated pages. Images disabled; exact commercial reuse grant not established."
+    },
+    {
+      "source_id": "erzurum_bb_news",
+      "enabled": true,
+      "status": "active_adapter2_heading",
+      "adapter2_strategy": "heading_link",
+      "notes": "Adapter 2 probe run 4 validated 6/6 dated official heading-link news items, including a current 29 August 2026 post. Images disabled; exact commercial reuse grant not established."
+    },
+    {
+      "source_id": "sirnak_bel_news",
+      "enabled": true,
+      "status": "active_adapter2_wordpress",
+      "adapter2_strategy": "wordpress_api",
+      "notes": "Adapter 2 probe run 4 confirmed a working official WordPress API with 10 dated posts. The homepage also exposes static administrative pages, so production uses the WordPress API only. Filter and freshness rules remain active; images disabled and reuse rights remain unresolved."
+    }
+  ]
+}
