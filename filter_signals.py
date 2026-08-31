@@ -11,7 +11,10 @@ RAW = ROOT / "data" / "raw_signals.jsonl"
 OUT = ROOT / "data" / "filtered_signals.jsonl"
 CORE_MANIFEST = ROOT / "sources.json"
 MUNICIPAL_MANIFEST = ROOT / "municipal_sources.json"
-MUNICIPAL_OVERRIDES = ROOT / "municipal_sources_overrides.json"
+MUNICIPAL_PATCH_FILES = [
+    ROOT / "municipal_sources_overrides.json",
+    ROOT / "municipal_sources_overrides_round4.json",
+]
 FILTER_VERSION = "rules-v11-live-utility"
 TURKEY_TZ = timezone(timedelta(hours=3))
 
@@ -145,13 +148,14 @@ def load_municipal_rows():
         if source_id:
             by_id[source_id] = dict(row)
 
-    if MUNICIPAL_OVERRIDES.exists():
-        patch = json.loads(MUNICIPAL_OVERRIDES.read_text(encoding="utf-8"))
+    patches = [json.loads(path.read_text(encoding="utf-8")) for path in MUNICIPAL_PATCH_FILES if path.exists()]
+    for patch in patches:
         for addition in patch.get("additions", []):
             source_id = text(addition.get("source_id"))
             if not source_id:
                 continue
             by_id.setdefault(source_id, {}).update(addition)
+    for patch in patches:
         for override in patch.get("overrides", []):
             source_id = text(override.get("source_id"))
             if source_id in by_id:
