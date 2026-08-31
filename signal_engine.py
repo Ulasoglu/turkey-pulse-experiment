@@ -12,7 +12,7 @@ OUTFILE = ROOT / "data" / "map_signals.jsonl"
 CORE_MANIFEST = ROOT / "sources.json"
 MUNICIPAL_MANIFEST = ROOT / "municipal_sources.json"
 MUNICIPAL_OVERRIDES = ROOT / "municipal_sources_overrides.json"
-ENGINE_VERSION = "signal-engine-v9-user-utility"
+ENGINE_VERSION = "signal-engine-v10-service-inflections"
 
 CATEGORY_RULES = [
     ("WEATHER", {"uyarı", "sağanak", "yağış", "fırtına", "rüzgâr", "rüzgar", "sıcak", "sıcaklık", "sel", "taşkın", "heyelan"}),
@@ -23,6 +23,10 @@ CATEGORY_RULES = [
 ]
 EVENT_CATEGORY_TERMS = {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "gösteri", "söyleşi", "atölye"}
 SERVICE_CATEGORY_TERMS = {"başvuru", "kayıt", "destek", "yardım", "burs", "hibe", "müracaat", "kurs"}
+SERVICE_STEM_PATTERN = re.compile(
+    r"(?<!\w)(?:başvuru|kayıt|destek|yardım|burs|hibe|müracaat|kurs)\w*",
+    flags=re.UNICODE,
+)
 HIGH_RELEVANCE_TERMS = {"uyarı", "kapatıldı", "kapatılacak", "kesintisi", "kesinti", "arıza", "trafik", "ulaşım", "deprem", "yangın", "sağanak", "fırtına", "yağış", "sel", "taşkın", "heyelan"}
 MEDIUM_RELEVANCE_TERMS = {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "yenileme", "altyapı", "bakım", "onarım", "asfalt", "kanalizasyon", "proje", "başvuru", "kayıt", "destek", "yardım", "burs", "hibe"}
 LIFETIMES = {
@@ -119,7 +123,8 @@ def source_is_event(row, policies):
 
 def service_opportunity(row):
     title = normalize(row.get("title"))
-    return has_any(title, SERVICE_CATEGORY_TERMS) and not has_any(title, EVENT_CATEGORY_TERMS)
+    has_service = bool(SERVICE_STEM_PATTERN.search(title)) or has_any(title, SERVICE_CATEGORY_TERMS)
+    return has_service and not has_any(title, EVENT_CATEGORY_TERMS)
 
 
 def detect_category(row, policies):
