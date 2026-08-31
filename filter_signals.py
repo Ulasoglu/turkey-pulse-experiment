@@ -12,13 +12,11 @@ OUT = ROOT / "data" / "filtered_signals.jsonl"
 CORE_MANIFEST = ROOT / "sources.json"
 MUNICIPAL_MANIFEST = ROOT / "municipal_sources.json"
 MUNICIPAL_OVERRIDES = ROOT / "municipal_sources_overrides.json"
-FILTER_VERSION = "rules-v9-municipal-quality-gate"
+FILTER_VERSION = "rules-v10-date-and-category-quality"
 
 GENERIC_DROP_TITLES = {"haberler", "haber", "duyurular", "duyuru", "gündem", "guncel", "güncel"}
+MAX_FUTURE_NEWS_SKEW = timedelta(hours=6)
 
-# Signals that can affect daily life or safety. These stay KEEP even when the
-# wording also looks retrospective because closures/outages/warnings can still
-# be operationally relevant at publication time.
 CRITICAL_TERMS = {
     "uyarı", "sağanak", "yağış", "fırtına", "kuvvetli rüzgâr", "kuvvetli rüzgar",
     "aşırı sıcak", "yangın", "sel", "taşkın", "heyelan",
@@ -28,25 +26,24 @@ CRITICAL_TERMS = {
     "elektrik kesintisi", "su kesintisi", "doğalgaz", "arıza", "kesinti",
 }
 
-# Public-facing things a resident can still attend/apply/register for. Past-tense
-# recap wording is checked before this set so "konser gerçekleştirildi" does not
-# become a live event just because the title contains "konser".
 EVENT_TERMS = {
     "etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar",
-    "şenlik", "turnuva", "yarış", "başvuru", "kayıt", "ücretsiz", "indirimli",
+    "şenlik", "turnuva", "yarış", "gösteri", "söyleşi", "atölye",
+}
+SERVICE_TERMS = {
+    "başvuru", "kayıt", "destek", "yardım", "burs", "dağıtım", "kurs",
+    "ücretsiz", "indirimli", "hak sahipleri", "müracaat",
 }
 
-# Municipal physical/service changes are useful, but generic investment/works
-# stories are not automatically map-worthy. Active/future wording upgrades them
-# to KEEP; otherwise they stay MAYBE for review instead of flooding the map.
 LOCAL_IMPACT_TERMS = {
     "altyapı", "yenileme", "bakım", "onarım", "asfalt", "kazı", "kanalizasyon",
     "içme suyu", "yağmur suyu", "yol", "cadde", "sokak", "köprü", "tünel",
-    "otopark", "pazar yeri", "tesis", "inşaat", "çalışma", "çalışmalar",
+    "otopark", "pazar yeri", "tesis", "inşaat", "çalışma", "çalışmalar", "genişletme",
 }
 ACTIVE_MARKERS = {
-    "başladı", "başlıyor", "başlayacak", "sürüyor", "devam ediyor", "devam edecek",
-    "kapatılacak", "açılacak", "hizmete girecek", "uygulanacak", "yenilenecek",
+    "başladı", "başlıyor", "başlayacak", "sürüyor", "sürdürülüyor", "sürdürülen",
+    "devam ediyor", "devam edecek", "kapatılacak", "açılacak", "hizmete girecek",
+    "uygulanacak", "yenilenecek", "çağırdı", "duyuruldu",
 }
 
 PR_TERMS = {
@@ -105,8 +102,6 @@ def load_municipal_rows():
         if source_id:
             by_id[source_id] = dict(row)
 
-    # The workflow temporarily expands municipal_sources.json before collection,
-    # but loading the patch as well keeps direct/local filter runs consistent.
     if MUNICIPAL_OVERRIDES.exists():
         patch = json.loads(MUNICIPAL_OVERRIDES.read_text(encoding="utf-8"))
         for addition in patch.get("additions", []):
@@ -160,6 +155,8 @@ def freshness_decision(row, policy, now):
         published = parse_iso(row.get("published_at"))
         if published is None:
             return None
+        if published > now + MAX_FUTURE_NEWS_SKEW:
+            return "DROP", "freshness_news_future_timestamp"
         max_age_days = int(policy.get("max_age_days", 7))
         if published < now - timedelta(days=max_age_days):
             return "DROP", "freshness_news_too_old"
@@ -223,6 +220,7 @@ def classify(row, policies, municipal_ids, paused_municipal_ids, now=None):
     retro_hits = term_hits(title_n, RETROSPECTIVE_TERMS)
     pr_hits = term_hits(title_n, PR_TERMS)
     event_hits = term_hits(title_n, EVENT_TERMS)
+    service_hits = term_hits(title_n, SERVICE_TERMS)
     local_hits = term_hits(title_n, LOCAL_IMPACT_TERMS)
     active_hits = term_hits(title_n, ACTIVE_MARKERS)
 
@@ -232,10 +230,12 @@ def classify(row, policies, municipal_ids, paused_municipal_ids, now=None):
         return "DROP", "retrospective:" + ",".join(retro_hits[:3])
     if pr_hits:
         return "DROP", "likely_pr:" + ",".join(pr_hits[:3])
-    if event_hits:
-        return "KEEP", "public_event:" + ",".join(event_hits[:3])
     if local_hits and active_hits:
         return "KEEP", "active_local_impact:" + ",".join((local_hits + active_hits)[:4])
+    if event_hits:
+        return "KEEP", "public_event:" + ",".join(event_hits[:3])
+    if service_hits:
+        return "KEEP", "municipal_service:" + ",".join(service_hits[:3])
     if local_hits:
         return "MAYBE", "municipal_local_impact:" + ",".join(local_hits[:3])
 
@@ -311,10 +311,7 @@ def main():
     print(f"MAYBE: {counts['MAYBE']}")
     print(f"DROP:  {counts['DROP']}")
     print(f"BAD JSON LINES: {bad}")
-    print(
-        f"MUNICIPAL REGISTRY: {len(municipal_ids)} known, "
-        f"{len(paused_municipal_ids)} paused"
-    )
+    print(f"MUNICIPAL REGISTRY: {len(municipal_ids)} known, {len(paused_municipal_ids)} paused")
     print(
         "MUNICIPAL ROWS: "
         f"KEEP={municipal_counts['KEEP']} MAYBE={municipal_counts['MAYBE']} DROP={municipal_counts['DROP']}"
@@ -323,7 +320,9 @@ def main():
         "QUALITY GATE: "
         f"low_impact_drop={reason_counts['municipal_low_impact']} "
         f"retrospective_drop={reason_counts['retrospective']} "
-        f"pr_drop={reason_counts['likely_pr']}"
+        f"pr_drop={reason_counts['likely_pr']} "
+        f"future_news_drop={reason_counts['freshness_news_future_timestamp']} "
+        f"service_keep={reason_counts['municipal_service']}"
     )
     print("\nBy source:")
     for sid in sorted({text(r.get("source_id")) for r in rows}):
