@@ -40,13 +40,16 @@ class Source:
     url: str
 
 
+# Round 2 focuses on sources that already produced candidates in Adapter 1,
+# but mostly lacked reliable publication dates. This remains a read-only probe.
 SOURCES = [
-    Source("Burdur", "burdur_bel_news", "https://burdur.bel.tr/category/haberler/"),
-    Source("Batman", "batman_bel_news", "https://www.batman.bel.tr/"),
-    Source("Kars", "kars_bel_news", "https://www.kars.bel.tr/haberler"),
-    Source("Karaman", "karaman_bel_news", "https://www.karaman.bel.tr/Haberler.aspx"),
-    Source("Kırıkkale", "kirikkale_bel_news", "https://kirikkale.bel.tr/?sayfa=haberler"),
-    Source("Hakkari", "hakkari_bel_news", "https://www.hakkari.bel.tr/haberler"),
+    Source("Niğde", "nigde_bel_news", "https://www.nigde.bel.tr/haberler"),
+    Source("Şanlıurfa", "sanliurfa_bb_news", "https://www.sanliurfa.bel.tr/"),
+    Source("Ağrı", "agri_bel_news", "https://www.agri.bel.tr/haberler/"),
+    Source("Hatay", "hatay_bb_news", "https://www.hatay.bel.tr/AnaSayfa"),
+    Source("Uşak", "usak_bel_news", "https://www.usak.bel.tr/haber-kategori/tum-haberler"),
+    Source("Kilis", "kilis_bel_news", "https://www.kilis.bel.tr/index.php/category/haber/"),
+    Source("Osmaniye", "osmaniye_bel_news", "https://osmaniye-bld.gov.tr/kategori/haberler"),
 ]
 
 
@@ -245,7 +248,8 @@ def detail_date(url: str):
                     return date, "detail-jsonld"
                 stack.extend(v for v in node.values() if isinstance(v, (dict, list)))
     text = clean(soup.get_text(" ", strip=True))[:6000]
-    return parse_date(text), "detail-text" if parse_date(text) else None
+    parsed = parse_date(text)
+    return parsed, "detail-text" if parsed else None
 
 
 def probe(source: Source):
@@ -255,7 +259,7 @@ def probe(source: Source):
     wp_status = wordpress_api_candidates(source, soup, rows, seen)
 
     detail_fetches = 0
-    for row in rows[:10]:
+    for row in rows[:12]:
         if row["date"]:
             continue
         date, strategy = detail_date(row["url"])
@@ -277,6 +281,7 @@ def probe(source: Source):
 
 def main():
     print("=== ADAPTER 2 MUNICIPAL NEWS PROBE ===")
+    print("ROUND: 2 / publication-date candidates")
     print("MODE: read-only; production data and registry are NOT modified")
     print("TLS verification stays enabled; access-control failures are not bypassed.")
     winners = 0
