@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin, urlparse
 
@@ -25,6 +26,10 @@ BAD_PATH_BITS = (
     "/iletisim", "/kurumsal", "/baskan", "/meclis", "/galeri", "/video", "/arama",
     "privacy-policy", "sayfa=kirikkale",
 )
+DETAIL_DATE_MARKER = re.compile(
+    r"(?:Eklenme|Yayınlanma|Yayimlanma|Yayımlanma|Yayimlanma|Haber|Oluşturulma|Olusturulma)\s+Tarihi\s*[:\-]?\s*([^|]{0,80})",
+    re.IGNORECASE,
+)
 
 
 def load_sources():
@@ -43,6 +48,7 @@ def load_sources():
             "strategy": strategy,
             "url_hints": tuple(clean(x) for x in (row.get("adapter2_url_hints") or [])),
             "max_age_days": int(row.get("max_age_days", defaults.get("max_age_days", 7))),
+            "detail_fetch_limit": int(row.get("adapter2_detail_fetch_limit", 12)),
             "rights_status": clean(row.get("rights_status") or defaults.get("rights_status") or "reuse_needs_final_check"),
         })
     return rows
@@ -79,9 +85,11 @@ def parse_wordpress_date(value):
     return dt.astimezone(timezone.utc)
 
 
-def add_candidate(by_url, source, title, absolute, published, date_source):
+def add_candidate(by_url, source, title, absolute, published, date_source, *, allow_undated=False):
     title = compact_title(title)
-    if len(title) < 18 or published is None or not plausible_detail(source, absolute):
+    if len(title) < 18 or not plausible_detail(source, absolute):
+        return
+    if published is None and not allow_undated:
         return
     key = canonical_url(absolute)
     current = by_url.get(key)
@@ -91,7 +99,13 @@ def add_candidate(by_url, source, title, absolute, published, date_source):
         "published": published,
         "date_source": date_source,
     }
-    if current is None or len(title) < len(current["title"]):
+    if current is None:
+        by_url[key] = candidate
+        return
+    if current.get("published") is None and published is not None:
+        by_url[key] = candidate
+        return
+    if (current.get("published") is None) == (published is None) and len(title) < len(current["title"]):
         by_url[key] = candidate
 
 
@@ -120,7 +134,7 @@ def extract_heading_links(source, html):
     return list(by_url.values())
 
 
-def extract_semantic_cards(source, html):
+def extract_semantic_cards(source, html, *, allow_undated=False):
     soup = BeautifulSoup(html, "html.parser")
     by_url = {}
     reference = datetime.now(timezone.utc)
@@ -149,8 +163,86 @@ def extract_semantic_cards(source, html):
             absolute,
             published,
             f"adapter2_semantic_{kind}" if kind else "adapter2_semantic",
+            allow_undated=allow_undated,
         )
     return list(by_url.values())
+
+
+def walk_jsonld_for_date(node):
+    if isinstance(node, list):
+        for item in node:
+            found = walk_jsonld_for_date(item)
+            if found:
+                return found
+        return None
+    if not isinstance(node, dict):
+        return None
+    for key in ("datePublished", "dateCreated"):
+        if node.get(key):
+            parsed = parse_wordpress_date(node.get(key))
+            if parsed:
+                return parsed
+    for value in node.values():
+        if isinstance(value, (dict, list)):
+            found = walk_jsonld_for_date(value)
+            if found:
+                return found
+    return None
+
+
+def fetch_guarded_detail_date(url):
+    response = request_with_retry(url, attempts=2, read_timeout=20)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    for selector, attr in (
+        ('meta[property="article:published_time"]', "content"),
+        ('meta[name="date"]', "content"),
+        ('meta[name="publish-date"]', "content"),
+        ("time[datetime]", "datetime"),
+    ):
+        node = soup.select_one(selector)
+        if node:
+            parsed = parse_wordpress_date(node.get(attr))
+            if parsed:
+                return parsed, "adapter2_detail_semantic"
+
+    for script in soup.find_all("script", type=lambda value: value and "ld+json" in str(value)):
+        try:
+            payload = json.loads(script.string or script.get_text())
+        except Exception:
+            continue
+        parsed = walk_jsonld_for_date(payload)
+        if parsed:
+            return parsed, "adapter2_detail_jsonld"
+
+    text = clean(soup.get_text(" ", strip=True))
+    marker = DETAIL_DATE_MARKER.search(text[:7000])
+    if marker:
+        parsed, kind = parse_publication_date(marker.group(1), allow_relative=False)
+        if parsed:
+            return parsed, f"adapter2_detail_marker_{kind}"
+
+    return None, None
+
+
+def enrich_detail_dates(source, candidates):
+    fetched = dated = errors = 0
+    for item in candidates:
+        if item.get("published") is not None:
+            continue
+        if fetched >= source["detail_fetch_limit"]:
+            break
+        fetched += 1
+        try:
+            published, date_source = fetch_guarded_detail_date(item["url"])
+            if published:
+                item["published"] = published
+                item["date_source"] = date_source
+                dated += 1
+        except Exception as exc:
+            errors += 1
+            print(f"DETAIL ERROR {item['url']}: {type(exc).__name__}: {exc}")
+    return fetched, dated, errors
 
 
 def extract_wordpress_api(source):
@@ -177,6 +269,7 @@ def collect(source):
     print(f"\n--- {source['province']} / {source['source_id']} / {source['strategy']} ---")
     strategy = source["strategy"]
     http_status = 200
+    detail_fetched = detail_dated = detail_errors = 0
     if strategy == "wordpress_api":
         candidates = extract_wordpress_api(source)
     else:
@@ -186,6 +279,10 @@ def collect(source):
             candidates = extract_heading_links(source, response.text)
         elif strategy == "semantic_card":
             candidates = extract_semantic_cards(source, response.text)
+        elif strategy == "semantic_card_detail":
+            candidates = extract_semantic_cards(source, response.text, allow_undated=True)
+            detail_fetched, detail_dated, detail_errors = enrich_detail_dates(source, candidates)
+            candidates = [item for item in candidates if item.get("published") is not None]
         else:
             raise ValueError(f"Unknown adapter2_strategy={strategy} for {source['source_id']}")
 
@@ -234,7 +331,8 @@ def collect(source):
     changed, old_count, final_count = replace_source_snapshot(source["source_id"], snapshot_rows)
     print(
         f"parsed={len(candidates)} fresh={fresh} stale={stale} future_rejected={future_rejected} "
-        f"snapshot={final_count} replaced_old={old_count} changed={int(changed)}"
+        f"snapshot={final_count} replaced_old={old_count} changed={int(changed)} "
+        f"detail_fetched={detail_fetched} detail_dated={detail_dated} detail_errors={detail_errors}"
     )
 
 
@@ -242,6 +340,7 @@ def main():
     print("=== MUNICIPAL NEWS ADAPTER 2 COLLECTOR ===")
     print("Only validated per-source strategies are enabled. Images remain disabled.")
     print("TLS verification stays enabled; no access-control bypasses are used.")
+    print("Detail-date fallback accepts only semantic metadata, JSON-LD, or explicit publication-date markers.")
     sources = load_sources()
     print(f"Adapter 2 sources: {len(sources)}")
     failures = 0
