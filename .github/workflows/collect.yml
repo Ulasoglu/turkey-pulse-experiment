@@ -76,5 +76,8 @@ jobs:
             exit 0
           fi
           git commit -m "chore: collect, score and export Turkey pulse signals"
+          echo "Cleaning non-data runtime changes before rebase..."
+          git status --short
+          git restore .
           git pull --rebase origin main
           git push origin main
