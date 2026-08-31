@@ -188,7 +188,11 @@ def request_with_retry(url, *, attempts=3, read_timeout=20):
             return response
         except requests.exceptions.SSLError:
             raise
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+        except (
+            requests.exceptions.Timeout,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.ChunkedEncodingError,
+        ) as exc:
             last_error = exc
             if attempt == attempts:
                 break
