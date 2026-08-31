@@ -12,7 +12,8 @@ OUT = ROOT / "data" / "filtered_signals.jsonl"
 CORE_MANIFEST = ROOT / "sources.json"
 MUNICIPAL_MANIFEST = ROOT / "municipal_sources.json"
 MUNICIPAL_OVERRIDES = ROOT / "municipal_sources_overrides.json"
-FILTER_VERSION = "rules-v10-date-and-category-quality"
+FILTER_VERSION = "rules-v11-live-utility"
+TURKEY_TZ = timezone(timedelta(hours=3))
 
 GENERIC_DROP_TITLES = {"haberler", "haber", "duyurular", "duyuru", "gündem", "guncel", "güncel"}
 MAX_FUTURE_NEWS_SKEW = timedelta(hours=6)
@@ -31,7 +32,7 @@ EVENT_TERMS = {
     "şenlik", "turnuva", "yarış", "gösteri", "söyleşi", "atölye",
 }
 SERVICE_TERMS = {
-    "başvuru", "kayıt", "destek", "yardım", "burs", "dağıtım", "kurs",
+    "başvuru", "kayıt", "destek", "yardım", "burs", "hibe", "dağıtım", "kurs",
     "ücretsiz", "indirimli", "hak sahipleri", "müracaat",
 }
 
@@ -57,6 +58,25 @@ RETROSPECTIVE_TERMS = {
     "kutlandı", "taçlandı", "yoğun ilgi gördü", "katılım sağladı", "bir araya geldi",
     "incelemelerde bulundu", "ziyaret gerçekleştirdi", "ödüllendirildi",
     "buluşma noktası oldu", "yolculuk yaptı", "avrupa beşincisi", "çifte gurur",
+}
+
+MONTHS = {
+    "ocak": 1, "şubat": 2, "subat": 2, "mart": 3, "nisan": 4,
+    "mayıs": 5, "mayis": 5, "haziran": 6, "temmuz": 7,
+    "ağustos": 8, "agustos": 8, "eylül": 9, "eylul": 9,
+    "ekim": 10, "kasım": 11, "kasim": 11, "aralık": 12, "aralik": 12,
+}
+DAY_MONTH_PATTERN = re.compile(
+    r"(?<!\d)([0-3]?\d)\s+(ocak|şubat|subat|mart|nisan|mayıs|mayis|haziran|temmuz|ağustos|agustos|eylül|eylul|ekim|kasım|kasim|aralık|aralik)(?!\w)",
+    re.IGNORECASE,
+)
+FIXED_EVENT_DATES = {
+    "zafer bayramı": (8, 30),
+    "cumhuriyet bayramı": (10, 29),
+    "ulusal egemenlik ve çocuk bayramı": (4, 23),
+    "atatürk'ü anma gençlik ve spor bayramı": (5, 19),
+    "atatürk’ü anma gençlik ve spor bayramı": (5, 19),
+    "demokrasi ve milli birlik günü": (7, 15),
 }
 
 
@@ -88,6 +108,29 @@ def parse_iso(value):
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
+
+
+def infer_event_date_from_title(title_n, published, now):
+    base_local = (published or now).astimezone(TURKEY_TZ)
+    year = base_local.year
+    candidates = []
+
+    for match in DAY_MONTH_PATTERN.finditer(title_n):
+        try:
+            day = int(match.group(1))
+            month = MONTHS.get(normalize(match.group(2)))
+            if month:
+                candidates.append(datetime(year, month, day, tzinfo=TURKEY_TZ).date())
+        except ValueError:
+            continue
+
+    for marker, (month, day) in FIXED_EVENT_DATES.items():
+        if contains_term(title_n, marker):
+            candidates.append(datetime(year, month, day, tzinfo=TURKEY_TZ).date())
+
+    if not candidates:
+        return None
+    return max(candidates)
 
 
 def load_municipal_rows():
@@ -223,6 +266,7 @@ def classify(row, policies, municipal_ids, paused_municipal_ids, now=None):
     service_hits = term_hits(title_n, SERVICE_TERMS)
     local_hits = term_hits(title_n, LOCAL_IMPACT_TERMS)
     active_hits = term_hits(title_n, ACTIVE_MARKERS)
+    generic_municipal = is_generic_municipal(row, source_id, municipal_ids)
 
     if critical_hits:
         return "KEEP", "critical_local_signal:" + ",".join(critical_hits[:3])
@@ -233,6 +277,13 @@ def classify(row, policies, municipal_ids, paused_municipal_ids, now=None):
     if local_hits and active_hits:
         return "KEEP", "active_local_impact:" + ",".join((local_hits + active_hits)[:4])
     if event_hits:
+        if generic_municipal:
+            published = parse_iso(row.get("published_at"))
+            event_date = infer_event_date_from_title(title_n, published, now)
+            if event_date is not None and event_date < now.astimezone(TURKEY_TZ).date():
+                return "DROP", "past_event_announcement"
+            if service_hits and not active_hits:
+                return "MAYBE", "ambiguous_event_service:" + ",".join((event_hits + service_hits)[:4])
         return "KEEP", "public_event:" + ",".join(event_hits[:3])
     if service_hits:
         return "KEEP", "municipal_service:" + ",".join(service_hits[:3])
@@ -241,7 +292,7 @@ def classify(row, policies, municipal_ids, paused_municipal_ids, now=None):
 
     if source_id == "akom_istanbul_news":
         return "MAYBE", "akom_needs_review"
-    if is_generic_municipal(row, source_id, municipal_ids):
+    if generic_municipal:
         return "DROP", "municipal_low_impact"
     return "MAYBE", "unclassified_source"
 
@@ -322,6 +373,8 @@ def main():
         f"retrospective_drop={reason_counts['retrospective']} "
         f"pr_drop={reason_counts['likely_pr']} "
         f"future_news_drop={reason_counts['freshness_news_future_timestamp']} "
+        f"past_event_drop={reason_counts['past_event_announcement']} "
+        f"ambiguous_event_service={reason_counts['ambiguous_event_service']} "
         f"service_keep={reason_counts['municipal_service']}"
     )
     print("\nBy source:")
