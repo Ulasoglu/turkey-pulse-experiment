@@ -12,7 +12,7 @@ OUTFILE = ROOT / "data" / "map_signals.jsonl"
 CORE_MANIFEST = ROOT / "sources.json"
 MUNICIPAL_MANIFEST = ROOT / "municipal_sources.json"
 MUNICIPAL_OVERRIDES = ROOT / "municipal_sources_overrides.json"
-ENGINE_VERSION = "signal-engine-v8-category-quality"
+ENGINE_VERSION = "signal-engine-v9-user-utility"
 
 CATEGORY_RULES = [
     ("WEATHER", {"uyarı", "sağanak", "yağış", "fırtına", "rüzgâr", "rüzgar", "sıcak", "sıcaklık", "sel", "taşkın", "heyelan"}),
@@ -21,8 +21,10 @@ CATEGORY_RULES = [
     ("INFRASTRUCTURE", {"altyapı", "yenileme", "bakım", "onarım", "asfalt", "kanalizasyon", "inşaat", "proje", "genişletme"}),
     ("EVENT", {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "gösteri", "söyleşi", "atölye"}),
 ]
+EVENT_CATEGORY_TERMS = {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "gösteri", "söyleşi", "atölye"}
+SERVICE_CATEGORY_TERMS = {"başvuru", "kayıt", "destek", "yardım", "burs", "hibe", "müracaat", "kurs"}
 HIGH_RELEVANCE_TERMS = {"uyarı", "kapatıldı", "kapatılacak", "kesintisi", "kesinti", "arıza", "trafik", "ulaşım", "deprem", "yangın", "sağanak", "fırtına", "yağış", "sel", "taşkın", "heyelan"}
-MEDIUM_RELEVANCE_TERMS = {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "yenileme", "altyapı", "bakım", "onarım", "asfalt", "kanalizasyon", "proje", "başvuru", "kayıt", "destek", "yardım", "burs"}
+MEDIUM_RELEVANCE_TERMS = {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "yenileme", "altyapı", "bakım", "onarım", "asfalt", "kanalizasyon", "proje", "başvuru", "kayıt", "destek", "yardım", "burs", "hibe"}
 LIFETIMES = {
     "EARTHQUAKE": timedelta(hours=24),
     "WEATHER": timedelta(hours=24),
@@ -115,6 +117,11 @@ def source_is_event(row, policies):
     return policies.get(text(row.get("source_id")), {}).get("kind") == "event" or bool(row.get("event_start_at"))
 
 
+def service_opportunity(row):
+    title = normalize(row.get("title"))
+    return has_any(title, SERVICE_CATEGORY_TERMS) and not has_any(title, EVENT_CATEGORY_TERMS)
+
+
 def detect_category(row, policies):
     sid = text(row.get("source_id"))
     title = normalize(row.get("title"))
@@ -124,15 +131,16 @@ def detect_category(row, policies):
         return "EARTHQUAKE"
     if sid == "ecmwf_open_data_weather" and row.get("derived_signal") is True:
         return "WEATHER"
-    if source_is_event(row, policies):
-        return "EVENT"
 
     if filter_reason.startswith(("active_local_impact:", "municipal_local_impact:")):
         return "INFRASTRUCTURE"
     if filter_reason.startswith("public_event:"):
         return "EVENT"
-    if filter_reason.startswith("municipal_service:"):
+    if filter_reason.startswith(("municipal_service:", "ambiguous_event_service:")):
         return "OTHER"
+
+    if source_is_event(row, policies):
+        return "OTHER" if service_opportunity(row) else "EVENT"
 
     for category, terms in CATEGORY_RULES:
         if has_any(title, terms):
@@ -153,7 +161,7 @@ def detect_relevance(row, category, policies):
         return "HIGH"
     if filter_reason.startswith("public_event:"):
         return "MEDIUM"
-    if filter_reason.startswith(("active_local_impact:", "municipal_local_impact:", "municipal_service:")):
+    if filter_reason.startswith(("active_local_impact:", "municipal_local_impact:", "municipal_service:", "ambiguous_event_service:")):
         return "MEDIUM"
 
     title = normalize(row.get("title"))
@@ -220,6 +228,8 @@ def decide(row, category, relevance, fresh):
     if category == "EVENT" and relevance in {"HIGH", "MEDIUM"}:
         return "SHOW"
     if filter_reason.startswith("municipal_service:") and filter_decision == "KEEP":
+        return "SHOW"
+    if category == "OTHER" and service_opportunity(row) and filter_decision == "KEEP":
         return "SHOW"
     if relevance == "HIGH" and fresh in {"NOW", "RECENT"}:
         return "SHOW"
