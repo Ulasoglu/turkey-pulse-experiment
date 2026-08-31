@@ -90,13 +90,13 @@
     "precipitation_mm_24h": null
   },
   {
-    "id": "cluster_4955795686fb",
+    "id": "cluster_da0faac5265d",
     "province": "Giresun",
     "category": "WEATHER",
     "title": "Giresun: Kuvvetli yağış ihtimali",
     "relevance": "HIGH",
     "freshness": "NOW",
-    "published_at": "2026-08-31T19:13:23+00:00",
+    "published_at": "2026-08-31T20:11:30+00:00",
     "source_id": "ecmwf_open_data_weather",
     "source_url": "https://www.ecmwf.int/en/forecasts/datasets/open-data",
     "rights_status": "open_license_verified",
@@ -120,13 +120,13 @@
     "precipitation_mm_24h": 19.8
   },
   {
-    "id": "cluster_09a399b368cf",
+    "id": "cluster_e98ceb2b6844",
     "province": "Ordu",
     "category": "WEATHER",
     "title": "Ordu: Kuvvetli yağış ihtimali",
     "relevance": "HIGH",
     "freshness": "NOW",
-    "published_at": "2026-08-31T19:13:23+00:00",
+    "published_at": "2026-08-31T20:11:30+00:00",
     "source_id": "ecmwf_open_data_weather",
     "source_url": "https://www.ecmwf.int/en/forecasts/datasets/open-data",
     "rights_status": "open_license_verified",
