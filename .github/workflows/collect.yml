@@ -41,6 +41,9 @@ jobs:
       - name: Collect ECMWF weather signals
         run: python -u collect_ecmwf_weather.py
 
+      - name: Prepare effective municipal registry
+        run: python -u prepare_municipal_registry.py
+
       - name: Collect generic municipal news
         run: python -u collect_municipal_news.py
 
