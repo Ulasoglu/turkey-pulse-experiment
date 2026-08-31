@@ -40,16 +40,16 @@ class Source:
     url: str
 
 
-# Round 2 focuses on sources that already produced candidates in Adapter 1,
-# but mostly lacked reliable publication dates. This remains a read-only probe.
+# Round 3 focuses on reachable sources where Adapter 1 parsed zero candidates.
+# These are deliberately tested as a small group before any production promotion.
 SOURCES = [
-    Source("Niğde", "nigde_bel_news", "https://www.nigde.bel.tr/haberler"),
-    Source("Şanlıurfa", "sanliurfa_bb_news", "https://www.sanliurfa.bel.tr/"),
-    Source("Ağrı", "agri_bel_news", "https://www.agri.bel.tr/haberler/"),
-    Source("Hatay", "hatay_bb_news", "https://www.hatay.bel.tr/AnaSayfa"),
-    Source("Uşak", "usak_bel_news", "https://www.usak.bel.tr/haber-kategori/tum-haberler"),
-    Source("Kilis", "kilis_bel_news", "https://www.kilis.bel.tr/index.php/category/haber/"),
-    Source("Osmaniye", "osmaniye_bel_news", "https://osmaniye-bld.gov.tr/kategori/haberler"),
+    Source("Trabzon", "trabzon_bb_news", "https://trabzon.bel.tr/"),
+    Source("Denizli", "denizli_bb_news", "https://yeni.denizli.bel.tr/Default.aspx?k=haberlist"),
+    Source("Kastamonu", "kastamonu_bel_news", "https://www.kastamonu.bel.tr/haberler/"),
+    Source("Mardin", "mardin_bb_news", "https://www.mardin.bel.tr/haberler"),
+    Source("Siirt", "siirt_bel_news", "https://www.siirt.bel.tr/haberler"),
+    Source("Afyonkarahisar", "afyon_bel_news", "https://www.afyon.bel.tr/ana-sayfa"),
+    Source("Antalya", "antalya_bb_news", "https://www.antalya.bel.tr/haberler"),
 ]
 
 
@@ -281,7 +281,7 @@ def probe(source: Source):
 
 def main():
     print("=== ADAPTER 2 MUNICIPAL NEWS PROBE ===")
-    print("ROUND: 2 / publication-date candidates")
+    print("ROUND: 3 / reachable Adapter-1 mismatches")
     print("MODE: read-only; production data and registry are NOT modified")
     print("TLS verification stays enabled; access-control failures are not bypassed.")
     winners = 0
