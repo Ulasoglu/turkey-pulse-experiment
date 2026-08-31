@@ -51,7 +51,7 @@ jobs:
         run: python -u collect_municipal_news_adapter2.py
 
       - name: Filter signals
-        run: python filter_signals.py
+        run: python run_filter_prepared_registry.py
 
       - name: Run signal engine
         run: python signal_engine.py
