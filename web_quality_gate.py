@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 WEB_DATA = ROOT / "web" / "data" / "signals.json"
 TURKEY_TZ = timezone(timedelta(hours=3))
-QUALITY_VERSION = "web-quality-v1-user-value"
+QUALITY_VERSION = "web-quality-v2-time-consistency"
 
 # These HTML event sources often expose a start time but no reliable end time.
 # For a "what is happening now?" product, yesterday's event should not stay
@@ -45,21 +45,6 @@ MONTH_PATTERN = re.compile(
     r"(Ocak|Şubat|Subat|Mart|Nisan|Mayıs|Mayis|Haziran|Temmuz|Ağustos|Agustos|Eylül|Eylul|Ekim|Kasım|Kasim|Aralık|Aralik)\b",
     re.IGNORECASE,
 )
-
-ACTIONABLE_SERVICE_TERMS = {
-    "başvuru",
-    "başvurular",
-    "başvur",
-    "kayıt",
-    "müracaat",
-    "çağrı",
-    "son gün",
-    "başladı",
-    "başlıyor",
-    "açıldı",
-    "alınacak",
-}
-WEAK_SERVICE_TERMS = {"destek", "yardım", "burs"}
 
 
 def text(value):
@@ -116,7 +101,6 @@ def reason_to_drop(row, now_local):
     source_id = text(row.get("source_id"))
     category = text(row.get("category"))
     title = text(row.get("title"))
-    title_n = normalize(title)
 
     # Dedicated HTML event sources without reliable end times: keep today's and
     # future events, hide older starts.
@@ -135,11 +119,11 @@ def reason_to_drop(row, now_local):
         if event_date is not None and event_date.date() < now_local.date():
             return "expired_dated_news_event"
 
-    # Generic "support/help/scholarship" headlines are often PR recaps. They are
-    # only user-facing when the title itself contains a clear action or open call.
-    if category == "OTHER" and any(term in title_n for term in WEAK_SERVICE_TERMS):
-        if not any(term in title_n for term in ACTIONABLE_SERVICE_TERMS):
-            return "non_actionable_service"
+    # Do not infer service actionability from a short exported headline here.
+    # The upstream filter and signal engine still have the richer source row and
+    # already decide whether municipal support/application items deserve SHOW.
+    # A final headline-only rule previously removed legitimate opportunities
+    # such as Manisa's current youth environmental-project support call.
 
     return None
 
