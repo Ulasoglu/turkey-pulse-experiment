@@ -59,6 +59,9 @@ jobs:
       - name: Export web data
         run: python export_web_data.py
 
+      - name: Apply final web quality gate
+        run: python web_quality_gate.py
+
       - name: Restore generated municipal registry
         run: git restore municipal_sources.json
 
