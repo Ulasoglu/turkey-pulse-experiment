@@ -17,7 +17,7 @@ OUT = ROOT / "data" / "raw_signals.jsonl"
 REGISTRY = ROOT / "municipal_sources.json"
 TURKEY_TZ = timezone(timedelta(hours=3))
 HEADERS = {
-    "User-Agent": "TurkeyPulseFeasibilityExperiment/1.4 (+municipal news collector)",
+    "User-Agent": "TurkeyPulseFeasibilityExperiment/1.5 (+municipal news collector)",
     "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.7",
 }
 
@@ -40,6 +40,18 @@ NOISE = {
     "devamını oku", "devamini oku", "sonraki", "önceki", "onceki", "anasayfa", "tüm haberler",
     "tum haberler", "daha fazla", "detay",
 }
+SCHEDULE_DATE_MARKERS = (
+    "başvuru tarihi", "başvuru tarihleri", "son başvuru", "kayıt tarihi", "kayıt tarihleri",
+    "etkinlik tarihi", "etkinlik tarihleri", "program tarihi", "başlangıç tarihi", "bitiş tarihi",
+    "son tarih", "son gün",
+)
+TITLE_METADATA_PATTERN = re.compile(
+    r"\s+(?:Başvuru Tarih(?:i|leri)|Başvuru Yeri|Kayıt Tarih(?:i|leri)|Etkinlik Tarih(?:i|leri)|"
+    r"Program Tarihi|Başlangıç Tarihi|Bitiş Tarihi|Tarih|Saat|Yer)\s*:",
+    re.IGNORECASE,
+)
+MAX_FUTURE_PUBLICATION_SKEW = timedelta(hours=6)
+MAX_TITLE_CHARS = 180
 
 
 @dataclass(frozen=True)
@@ -128,37 +140,76 @@ def canonical_url(value):
     ))
 
 
-def parse_date(text, allow_relative=False, reference=None):
-    value = clean(text)
-    match = DATE_PATTERNS[0].search(value)
-    if match:
+def _absolute_date_from_match(pattern_index, match):
+    if pattern_index == 0:
         day, month, year = map(int, match.groups())
-        try:
-            return datetime(year, month, day, tzinfo=TURKEY_TZ).astimezone(timezone.utc), "absolute"
-        except ValueError:
-            return None, None
-    match = DATE_PATTERNS[1].search(value)
-    if match:
+    else:
         day, month_name, year = match.groups()
         month = MONTHS.get(norm(month_name))
-        if month:
-            try:
-                return datetime(int(year), month, int(day), tzinfo=TURKEY_TZ).astimezone(timezone.utc), "absolute"
-            except ValueError:
-                return None, None
+        if not month:
+            return None
+        day, year = int(day), int(year)
+    try:
+        return datetime(year, month, day, tzinfo=TURKEY_TZ).astimezone(timezone.utc)
+    except ValueError:
+        return None
+
+
+def parse_relative_date(text, reference=None):
+    value = clean(text)
+    now_local = (reference or datetime.now(timezone.utc)).astimezone(TURKEY_TZ)
+    normalized = norm(value)
+    if re.search(r"\bbugün\b", normalized):
+        local_date = now_local.date()
+        return datetime(local_date.year, local_date.month, local_date.day, tzinfo=TURKEY_TZ).astimezone(timezone.utc), "relative"
+    if re.search(r"\bdün\b", normalized):
+        local_date = (now_local - timedelta(days=1)).date()
+        return datetime(local_date.year, local_date.month, local_date.day, tzinfo=TURKEY_TZ).astimezone(timezone.utc), "relative"
+    relative = RELATIVE_DATE_PATTERN.search(value)
+    if relative:
+        local_date = (now_local - timedelta(days=int(relative.group(1)))).date()
+        return datetime(local_date.year, local_date.month, local_date.day, tzinfo=TURKEY_TZ).astimezone(timezone.utc), "relative"
+    return None, None
+
+
+def parse_date(text, allow_relative=False, reference=None):
+    value = clean(text)
+    for pattern_index, pattern in enumerate(DATE_PATTERNS):
+        match = pattern.search(value)
+        if match:
+            dt = _absolute_date_from_match(pattern_index, match)
+            return (dt, "absolute") if dt else (None, None)
     if allow_relative:
-        now_local = (reference or datetime.now(timezone.utc)).astimezone(TURKEY_TZ)
-        normalized = norm(value)
-        if re.search(r"\bbugün\b", normalized):
-            local_date = now_local.date()
-            return datetime(local_date.year, local_date.month, local_date.day, tzinfo=TURKEY_TZ).astimezone(timezone.utc), "relative"
-        if re.search(r"\bdün\b", normalized):
-            local_date = (now_local - timedelta(days=1)).date()
-            return datetime(local_date.year, local_date.month, local_date.day, tzinfo=TURKEY_TZ).astimezone(timezone.utc), "relative"
-        relative = RELATIVE_DATE_PATTERN.search(value)
-        if relative:
-            local_date = (now_local - timedelta(days=int(relative.group(1)))).date()
-            return datetime(local_date.year, local_date.month, local_date.day, tzinfo=TURKEY_TZ).astimezone(timezone.utc), "relative"
+        return parse_relative_date(value, reference=reference)
+    return None, None
+
+
+def _looks_like_schedule_date(value, start, end):
+    context = norm(value[max(0, start - 55): start])
+    return any(marker in context for marker in SCHEDULE_DATE_MARKERS)
+
+
+def parse_publication_date(text, allow_relative=False, reference=None):
+    """Parse a news publication date without mistaking deadlines for publish time."""
+    value = clean(text)
+    reference = reference or datetime.now(timezone.utc)
+
+    matches = []
+    for pattern_index, pattern in enumerate(DATE_PATTERNS):
+        for match in pattern.finditer(value):
+            dt = _absolute_date_from_match(pattern_index, match)
+            if dt is not None:
+                matches.append((match.start(), match.end(), dt))
+
+    for start, end, dt in sorted(matches, key=lambda item: item[0]):
+        if dt > reference + MAX_FUTURE_PUBLICATION_SKEW:
+            continue
+        if _looks_like_schedule_date(value, start, end):
+            continue
+        return dt, "absolute"
+
+    if allow_relative:
+        return parse_relative_date(value, reference=reference)
     return None, None
 
 
@@ -170,6 +221,25 @@ def strip_date_suffix(value):
     text = re.sub(r"\bbugün\b|\bdün\b", " ", text, flags=re.IGNORECASE)
     text = CLOCK_PATTERN.sub(" ", text)
     return clean(text).strip(" -–—|·")
+
+
+def compact_title(value):
+    text = strip_date_suffix(value)
+    if not text:
+        return ""
+
+    metadata = TITLE_METADATA_PATTERN.search(text)
+    if metadata and metadata.start() >= 18:
+        text = text[:metadata.start()].strip()
+
+    if len(text) > MAX_TITLE_CHARS:
+        sentence = re.split(r"(?<=[.!?])\s+", text, maxsplit=1)[0].strip()
+        if 18 <= len(sentence) <= MAX_TITLE_CHARS:
+            text = sentence
+        else:
+            cut = text[:MAX_TITLE_CHARS].rsplit(" ", 1)[0].rstrip(" -–—|,:;")
+            text = (cut or text[:MAX_TITLE_CHARS]).rstrip() + "…"
+    return clean(text)
 
 
 def request_with_retry(url, *, attempts=3, read_timeout=20):
@@ -219,10 +289,9 @@ def is_internal_detail(source, absolute_url):
 
 
 def nearest_card(anchor):
-    # Prefer the tightest parent that looks like one item. Do not climb into a
-    # large list container just because a sibling happens to contain a date.
     node = anchor
     best = anchor.parent
+    reference = datetime.now(timezone.utc)
     for _ in range(5):
         if node is None:
             break
@@ -230,7 +299,7 @@ def nearest_card(anchor):
         links = len(node.find_all("a", href=True)) if hasattr(node, "find_all") else 0
         if 25 <= len(text) <= 1600 and links <= 6:
             best = node
-            _, kind = parse_date(text, allow_relative=True)
+            _, kind = parse_publication_date(text, allow_relative=True, reference=reference)
             if kind:
                 return node
         node = node.parent
@@ -238,14 +307,22 @@ def nearest_card(anchor):
 
 
 def title_from(anchor, card):
-    anchor_text = strip_date_suffix(anchor.get_text(" ", strip=True))
-    if len(anchor_text) >= 18 and norm(anchor_text) not in NOISE:
-        return anchor_text[:260]
+    raw_candidates = []
+    title_attr = clean(anchor.get("title"))
+    if title_attr:
+        raw_candidates.append(title_attr)
+
     for selector in ("h1", "h2", "h3", "h4", "h5", "h6", ".title", ".haber-baslik", ".news-title", "strong"):
         element = card.select_one(selector) if card else None
-        candidate = strip_date_suffix(element.get_text(" ", strip=True)) if element else ""
+        if element:
+            raw_candidates.append(element.get_text(" ", strip=True))
+
+    raw_candidates.append(anchor.get_text(" ", strip=True))
+
+    for raw in raw_candidates:
+        candidate = compact_title(raw)
         if len(candidate) >= 18 and norm(candidate) not in NOISE:
-            return candidate[:260]
+            return candidate
     return None
 
 
@@ -266,13 +343,11 @@ def extract_rows(source, html):
         if not title:
             continue
 
-        # Date nearest to the link wins. Relative dates are accepted only in
-        # the anchor/card itself, never from a broad ancestor/list container.
         anchor_text = clean(anchor.get_text(" ", strip=True))
-        published, date_kind = parse_date(anchor_text, allow_relative=True, reference=reference)
+        published, date_kind = parse_publication_date(anchor_text, allow_relative=True, reference=reference)
         if not published:
             card_text = clean(card.get_text(" ", strip=True)) if card else ""
-            published, date_kind = parse_date(card_text, allow_relative=True, reference=reference)
+            published, date_kind = parse_publication_date(card_text, allow_relative=True, reference=reference)
 
         candidate = {
             "title": title,
@@ -285,8 +360,6 @@ def extract_rows(source, html):
             by_url[url_key] = candidate
             continue
 
-        # A detail URL represents one story. Prefer an absolute date over a
-        # relative one and a cleaner/shorter headline over duplicated metadata.
         existing_absolute = existing.get("date_source") == "listing_absolute"
         candidate_absolute = candidate.get("date_source") == "listing_absolute"
         if candidate_absolute and not existing_absolute:
@@ -301,7 +374,7 @@ def fetch_detail_date(item):
     response = request_with_retry(item["url"], attempts=2, read_timeout=20)
     soup = BeautifulSoup(response.text, "html.parser")
     text = clean(soup.get_text(" ", strip=True))
-    published, _ = parse_date(text[:5000], allow_relative=False)
+    published, _ = parse_publication_date(text[:5000], allow_relative=False)
     return published
 
 
@@ -386,14 +459,18 @@ def collect(source):
                 print(f"DETAIL ERROR {item['url']}: {type(exc).__name__}: {exc}")
             time.sleep(0.15)
 
-    cutoff = datetime.now(timezone.utc) - timedelta(days=source.max_age_days)
-    fresh = stale = undated = 0
+    reference = datetime.now(timezone.utc)
+    cutoff = reference - timedelta(days=source.max_age_days)
+    fresh = stale = undated = future_rejected = 0
     snapshot_rows = []
 
     for item in candidates:
         published = item["published"]
         if published is None:
             undated += 1
+            continue
+        if published > reference + MAX_FUTURE_PUBLICATION_SKEW:
+            future_rejected += 1
             continue
         if published < cutoff:
             stale += 1
@@ -432,15 +509,19 @@ def collect(source):
     changed, old_count, final_count = replace_source_snapshot(source.source_id, snapshot_rows)
     print(
         f"parsed={len(candidates)} fresh={fresh} stale={stale} undated={undated} "
-        f"snapshot={final_count} replaced_old={old_count} changed={int(changed)} "
-        f"detail_fetched={detail_fetched} detail_dated={detail_dated} detail_errors={detail_errors}"
+        f"future_rejected={future_rejected} snapshot={final_count} replaced_old={old_count} "
+        f"changed={int(changed)} detail_fetched={detail_fetched} detail_dated={detail_dated} "
+        f"detail_errors={detail_errors}"
     )
 
 
 def main():
     print("=== GENERIC MUNICIPAL NEWS COLLECTOR ===")
     print("Images disabled unless separately rights-cleared.")
-    print("Hardening: canonical-URL dedupe, relative-date parsing, source snapshots, retries enabled.")
+    print(
+        "Hardening: canonical-URL dedupe, publication-date guards, title cleanup, "
+        "source snapshots and retries enabled."
+    )
     sources = load_sources()
     enabled_sources = [source for source in sources if source.enabled]
     disabled_sources = [source for source in sources if not source.enabled]
