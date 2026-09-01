@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="mobile-tune.css" />
   <link rel="stylesheet" href="image-cards.css" />
+  <link rel="stylesheet" href="pulse-experience.css" />
 </head>
 <body>
   <div class="product-shell">
@@ -27,6 +28,7 @@
       <div id="map" aria-label="Türkiye gelişmeler haritası"></div>
       <label class="floating-search"><input id="searchInput" type="search" placeholder="Şehir, ilçe veya konu ara..." autocomplete="off" /><span>⌕</span></label>
       <button id="resetMapButton" class="layers-button"><span>▱</span> Türkiye</button>
+      <div class="activity-legend" aria-label="İl hareketliliği"><strong>İL HAREKETLİLİĞİ</strong><div class="activity-scale"><span><i class="activity-0"></i>Sakin</span><span><i class="activity-1"></i>1</span><span><i class="activity-2"></i>2</span><span><i class="activity-3"></i>3+</span></div></div>
       <div class="priority-legend" aria-label="Önem düzeyi"><span><i class="priority-high"></i> Yüksek</span><span><i class="priority-normal"></i> Normal</span><span><i class="priority-low"></i> Düşük</span></div>
       <div class="map-status"><i></i><span id="statusText">Veriler yükleniyor…</span></div>
     </main>
@@ -43,6 +45,7 @@
   <template id="feedCardTemplate"><article class="feed-card"><div class="feed-row-icon"></div><div class="feed-card-body"><div class="feed-meta"><span class="category-name"></span><time></time></div><h3></h3><p class="feed-place"></p><p class="feed-source"></p></div><span class="priority-pill"></span><div class="feed-actions"><button class="show-on-map">Haritada göster</button><a class="source-link" target="_blank" rel="noopener noreferrer">Orijinali aç</a></div></article></template>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="app.js" defer></script>
+  <script src="pulse-experience.js" defer></script>
   <script src="weather-ui.js" defer></script>
   <script src="image-cards.js" defer></script>
 </body>
