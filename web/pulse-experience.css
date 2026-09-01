@@ -56,6 +56,7 @@
     font-weight:750;
     white-space:nowrap;
   }
+  .pulse-filter-pill[hidden]{display:none!important}
   .pulse-filter-pill b{font-size:12px;color:#7b878d;line-height:1}
   .pulse-filter-pill.province{color:#7040a1;background:rgba(255,255,255,.97);border-color:rgba(141,57,196,.18)}
   .pulse-filter-pill.province span{max-width:104px;overflow:hidden;text-overflow:ellipsis}
@@ -83,7 +84,7 @@
 
   .mobile-sheet{
     height:min(66dvh,610px);
-    transform:translateY(calc(100% - 286px));
+    transform:translateY(calc(100% - 88px));
     border-radius:24px 24px 0 0;
     box-shadow:0 -10px 30px rgba(18,38,48,.12);
   }
@@ -102,9 +103,7 @@
   .mobile-sheet .feed-place{font-size:8px;margin-top:4px}
   .mobile-sheet .feed-source{font-size:7px;margin-top:4px}
   .mobile-sheet .priority-pill{font-size:6px;padding:3px 5px}
-  .mobile-sheet:not(.open) .mobile-feed-list{overflow:hidden}
-  .mobile-sheet:not(.open) .mobile-feed-list .feed-card:nth-child(n+3){display:none}
-  .mobile-sheet:not(.open) .mobile-feed-list .feed-actions{display:none!important}
+  .mobile-sheet:not(.open) .mobile-feed-list{display:none}
 
   .pulse-filter-overlay{
     position:fixed;
@@ -150,5 +149,5 @@
 @media(max-width:390px){
   .pulse-filter-pill{padding:0 11px;gap:6px}
   .pulse-category-options{grid-template-columns:repeat(4,minmax(66px,1fr));overflow-x:auto;padding-bottom:2px}
-  .mobile-sheet{transform:translateY(calc(100% - 272px))}
+  .mobile-sheet{transform:translateY(calc(100% - 88px))}
 }
