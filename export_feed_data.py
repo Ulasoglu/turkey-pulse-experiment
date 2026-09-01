@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 INPUT = Path("data/map_signals.jsonl")
@@ -30,6 +31,12 @@ HARD_DROP_PREFIXES = (
 
 def text(value):
     return str(value or "").strip()
+
+
+def normalize_title(value):
+    raw = text(value).translate(str.maketrans({"I": "i", "İ": "i", "ı": "i"})).casefold()
+    raw = re.sub(r"[^\w\s]", " ", raw, flags=re.UNICODE)
+    return " ".join(raw.split())
 
 
 def valid_http_url(value):
@@ -95,17 +102,16 @@ def include_row(row):
     decision = text(row.get("filter_decision"))
     source_id = text(row.get("source_id"))
 
-    # Keep the strict map threshold for earthquakes/weather so a broad province
-    # feed does not become a stream of tiny AFAD events or model noise.
+    # Keep strict thresholds for earthquakes/weather. The broader feed should
+    # not become a stream of tiny AFAD events or model noise.
     if source_id in {"afad_event_service", "ecmwf_open_data_weather"}:
         return text(row.get("map_decision")) == "SHOW"
 
-    # Existing curated items always belong in the feed.
     if decision in {"KEEP", "MAYBE"}:
         return True
 
-    # This is the important product split: municipal_low_impact means "not
-    # important enough for a map marker", not "not a real/current news item".
+    # Real/current municipal news that is simply too small for a map marker is
+    # still useful inside the province feed.
     if is_news_like(row) and reason == "municipal_low_impact":
         return True
 
@@ -146,6 +152,25 @@ def to_item(row):
     }
 
 
+def story_key(item):
+    # Same source + province + normalized headline is one feed story even when
+    # a collector snapshot contains several dated occurrences of the same event.
+    # Example: Konya event 1253 (ÜÇ HAREM) appeared once per day with the same
+    # event identity. Showing all of them is duplicate UI, not extra information.
+    return (
+        text(item.get("source_id")),
+        text(item.get("province")),
+        normalize_title(item.get("title")),
+    )
+
+
+def item_rank(item):
+    # Prefer curated metadata when the same story exists in more than one form,
+    # then prefer the newest timestamp.
+    tier = 1 if item.get("feed_tier") == "curated" else 0
+    return (tier, text(item.get("published_at")))
+
+
 def main():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     rows = []
@@ -164,16 +189,17 @@ def main():
                 if include_row(row):
                     rows.append(to_item(row))
 
-    # The collectors already deduplicate source snapshots, but keep a final
-    # defensive dedupe so one story cannot flood a province feed.
     unique = {}
+    duplicate_rows = 0
     for item in rows:
-        key = (
-            text(item.get("source_id")),
-            text(item.get("title")).casefold(),
-            text(item.get("published_at"))[:10],
-        )
-        unique.setdefault(key, item)
+        key = story_key(item)
+        existing = unique.get(key)
+        if existing is None:
+            unique[key] = item
+            continue
+        duplicate_rows += 1
+        if item_rank(item) > item_rank(existing):
+            unique[key] = item
 
     items = list(unique.values())
     items.sort(key=lambda item: text(item.get("published_at")), reverse=True)
@@ -188,6 +214,7 @@ def main():
     print(f"PROVINCES:  {province_count}")
     print(f"CURATED:    {curated}")
     print(f"LOCAL NEWS: {local}")
+    print(f"DEDUPED:    {duplicate_rows}")
     print(f"BAD JSON:   {bad}")
     print(f"Wrote: {OUTPUT}")
 
