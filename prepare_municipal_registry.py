@@ -5,6 +5,7 @@ BASE = Path("municipal_sources.json")
 PATCH_FILES = [
     Path("municipal_sources_overrides.json"),
     Path("municipal_sources_overrides_round4.json"),
+    Path("municipal_sources_overrides_round5.json"),
 ]
 
 existing_patch_files = [path for path in PATCH_FILES if path.exists()]
