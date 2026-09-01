@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "overrides": [
+    {"source_id":"aksaray_bel_news","status":"active_validated","notes":"Run 193 parsed 15 dated items with 12 inside the seven-day window. Generic Adapter 1 shape is validated; images remain disabled."},
+    {"source_id":"ankara_bb_news","status":"active_validated","notes":"Run 193 parsed 10/10 fresh dated official municipal news items. Generic Adapter 1 shape is validated; images remain disabled."},
+    {"source_id":"bingol_bel_news","status":"active_validated_stale","notes":"Run 193 parsed 12 dated items cleanly; all were outside the seven-day window. Keep active because the source shape is technically validated."},
+    {"source_id":"bursa_bb_news","status":"active_validated","notes":"Run 193 parsed 100 dated archive items and retained 30 fresh items. Freshness and quality gates remain responsible for user-value selection; images remain disabled."},
+    {"source_id":"diyarbakir_bb_news","status":"active_validated","notes":"Run 193 parsed 16 dated items with 11 fresh. Generic Adapter 1 shape is validated; images remain disabled."},
+    {"source_id":"duzce_bb_news","status":"active_validated","notes":"Run 193 parsed 9/9 fresh dated official items. Generic Adapter 1 shape is validated; images remain disabled."},
+    {"source_id":"edirne_bel_news","status":"active_validated","notes":"Run 193 parsed 10 candidates, including 5 fresh dated items; one undated candidate is safely excluded. Generic Adapter 1 shape is validated."},
+    {"source_id":"erzincan_bel_news","status":"active_validated","notes":"Run 193 parsed 10 dated items with 4 fresh. Generic Adapter 1 shape is validated; images remain disabled."},
+    {"source_id":"mugla_bb_news","status":"active_validated","notes":"Run 193 parsed 50 dated items with 10 fresh. Generic Adapter 1 shape is validated; quality gates remain active."},
+    {"source_id":"rize_bel_duyurular","status":"active_validated","notes":"Run 193 parsed 3 candidates with 2 fresh dated service announcements; one undated candidate is safely excluded. Generic Adapter 1 shape is validated."},
+    {"source_id":"sakarya_bb_news","status":"active_validated","notes":"Run 193 parsed 15/15 fresh dated items using the existing bounded detail-date fallback. Generic Adapter 1 configuration is validated."},
+    {"source_id":"samsun_bb_news","status":"active_validated","notes":"Run 193 parsed 29 dated items with 5 fresh. Generic Adapter 1 shape is validated; separate Samsun events collection remains independent."},
+    {"source_id":"tokat_bb_news","status":"active_validated","notes":"Run 193 parsed 12 dated items with 9 fresh. Generic Adapter 1 shape is validated; images remain disabled."},
+    {"source_id":"yalova_bb_news","status":"active_validated_stale","notes":"Run 193 resolved dates for 15/15 candidates through bounded detail fetches; all were stale. Keep active because the source shape is technically validated."},
+    {"source_id":"zonguldak_bb_news","status":"active_validated","notes":"Run 193 parsed 9 dated items with 4 fresh. Generic Adapter 1 shape is validated; images remain disabled."},
+    {"source_id":"canakkale_bel_news","status":"active_validated","notes":"Run 193 parsed 11/11 fresh dated official items. Generic Adapter 1 shape is validated; images remain disabled."},
+
+    {"source_id":"bitlis_bel_news","enabled":false,"status":"paused_http_403","notes":"Run 193 returned HTTP 403 from the official municipality site on the GitHub runner. Do not bypass access controls."},
+    {"source_id":"istanbul_ibb_news","enabled":false,"status":"paused_adapter_mismatch","notes":"Run 193 reached the configured official IBB news page but Generic Adapter 1 parsed zero candidates. Keep AKOM active separately; this general-news source moves to Adapter 2 investigation."},
+    {"source_id":"konya_bb_news","enabled":false,"status":"paused_adapter_mismatch","notes":"Run 193 reached the configured official Konya news page but Generic Adapter 1 parsed zero candidates. The separate Konya events collector remains active; general news moves to Adapter 2 investigation."},
+    {"source_id":"yozgat_bel_news","enabled":false,"status":"paused_adapter_mismatch","notes":"Run 193 reached the configured official Yozgat site but Generic Adapter 1 parsed zero candidates. Move to Adapter 2 investigation rather than keeping a zero-output production request enabled."}
+  ]
+}
