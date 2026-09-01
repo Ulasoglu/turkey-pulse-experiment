@@ -3,6 +3,7 @@
   const baseRender = render;
   const baseVisibleSignals = visibleSignals;
   const baseFitTurkey = fitTurkey;
+  let initialTimeResolved = false;
 
   SOURCE_NAMES.afad_event_service = "AFAD";
   SOURCE_NAMES.akom_istanbul_news = "İstanbul AKOM";
@@ -92,8 +93,8 @@
   fitTurkey = function enhancedFitTurkey() {
     if (innerWidth <= 820 && map) {
       map.fitBounds(turkeyBounds, {
-        paddingTopLeft:[12, 90],
-        paddingBottomRight:[12, 248],
+        paddingTopLeft:[10, 82],
+        paddingBottomRight:[10, 108],
         animate:true,
         duration:.35
       });
@@ -283,8 +284,21 @@
     setBottomActive("mobileMap");
   };
 
+  function resolveUsefulInitialTime() {
+    if (initialTimeResolved || !signals.length) return;
+    initialTimeResolved = true;
+
+    if (selectedTime !== "today" || selectedCategory !== "ALL" || selectedProvince) return;
+    if (baseVisibleSignals({ignoreProvince:true}).length) return;
+
+    const originalTime = selectedTime;
+    selectedTime = "7d";
+    if (!baseVisibleSignals({ignoreProvince:true}).length) selectedTime = originalTime;
+  }
+
   render = function enhancedRender() {
     normalizeCoordinates();
+    resolveUsefulInitialTime();
     baseRender();
     updateMobileMapControls();
 
