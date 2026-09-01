@@ -18,6 +18,7 @@
     {"source_id":"zonguldak_bb_news","status":"active_validated","notes":"Run 193 parsed 9 dated items with 4 fresh. Generic Adapter 1 shape is validated; images remain disabled."},
     {"source_id":"canakkale_bel_news","status":"active_validated","notes":"Run 193 parsed 11/11 fresh dated official items. Generic Adapter 1 shape is validated; images remain disabled."},
 
+    {"source_id":"agri_bel_news","enabled":false,"status":"paused_adapter2_undated","notes":"Runs 193 and 194 both parsed only 2 undated candidates and produced zero fresh dated snapshot rows. Without a reliable publication date the source cannot satisfy the conservative freshness gate, so keep it paused until the municipality exposes explicit dates."},
     {"source_id":"bitlis_bel_news","enabled":false,"status":"paused_http_403","notes":"Run 193 returned HTTP 403 from the official municipality site on the GitHub runner. Do not bypass access controls."},
 
     {"source_id":"istanbul_ibb_news","enabled":true,"status":"active_adapter2_semantic","adapter2_strategy":"semantic_card","adapter2_url_hints":["/haber-detay/"],"notes":"Adapter 2 probe run 5 parsed 11/11 dated semantic-card items from the official IBB news archive, including multiple 31 August 2026 posts. Production is restricted to /haber-detay/ URLs so the category page itself and unrelated pages cannot enter the snapshot. AKOM remains a separate operational source; images remain disabled."},
