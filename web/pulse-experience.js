@@ -1,6 +1,8 @@
 (() => {
   const baseSourceName = sourceName;
   const baseRender = render;
+  const baseVisibleSignals = visibleSignals;
+  const baseFitTurkey = fitTurkey;
 
   SOURCE_NAMES.afad_event_service = "AFAD";
   SOURCE_NAMES.akom_istanbul_news = "İstanbul AKOM";
@@ -38,6 +40,66 @@
     }
 
     return baseSourceName(id);
+  };
+
+  function freshnessRank(value) {
+    return ({NOW:0, RECENT:1, OLD:2, UNKNOWN:3})[value] ?? 4;
+  }
+
+  function relevanceRank(value) {
+    return ({HIGH:0, MEDIUM:1, LOW:2})[value] ?? 3;
+  }
+
+  visibleSignals = function enhancedVisibleSignals(options = {}) {
+    const now = Date.now();
+    return [...baseVisibleSignals(options)].sort((a, b) => {
+      const freshnessDiff = freshnessRank(a.freshness) - freshnessRank(b.freshness);
+      if (freshnessDiff) return freshnessDiff;
+
+      const relevanceDiff = relevanceRank(a.relevance) - relevanceRank(b.relevance);
+      if (relevanceDiff) return relevanceDiff;
+
+      const aDate = parseDate(a.published_at);
+      const bDate = parseDate(b.published_at);
+      const aDistance = aDate ? Math.abs(aDate.getTime() - now) : Number.MAX_SAFE_INTEGER;
+      const bDistance = bDate ? Math.abs(bDate.getTime() - now) : Number.MAX_SAFE_INTEGER;
+      if (aDistance !== bDistance) return aDistance - bDistance;
+
+      return (bDate?.getTime() || 0) - (aDate?.getTime() || 0);
+    });
+  };
+
+  formatTime = function enhancedFormatTime(value) {
+    const date = parseDate(value);
+    if (!date) return "Zaman yok";
+
+    const now = new Date();
+    const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffDays = Math.round((day.getTime() - today.getTime()) / 864e5);
+    const hasClockTime = date.getHours() !== 0 || date.getMinutes() !== 0;
+    const clock = hasClockTime
+      ? new Intl.DateTimeFormat("tr-TR", {hour:"2-digit", minute:"2-digit"}).format(date)
+      : null;
+
+    if (diffDays === 0) return clock || "Bugün";
+    if (diffDays === 1) return clock ? `Yarın · ${clock}` : "Yarın";
+    if (diffDays === -1) return clock ? `Dün · ${clock}` : "Dün";
+
+    return new Intl.DateTimeFormat("tr-TR", {day:"numeric", month:"short"}).format(date);
+  };
+
+  fitTurkey = function enhancedFitTurkey() {
+    if (innerWidth <= 820 && map) {
+      map.fitBounds(turkeyBounds, {
+        paddingTopLeft:[10, 24],
+        paddingBottomRight:[10, 176],
+        animate:true,
+        duration:.35
+      });
+      return;
+    }
+    baseFitTurkey();
   };
 
   function provinceActivity(province) {
