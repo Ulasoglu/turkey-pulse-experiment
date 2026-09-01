@@ -24,4 +24,4 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Probe Adapter 2 candidates
-        run: python -u probe_adapter2_round4.py
+        run: python -u probe_adapter2_round5.py
