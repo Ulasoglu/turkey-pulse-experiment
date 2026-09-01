@@ -1,4 +1,4 @@
-const CACHE = "sehrin-ne-oldu-v13-province-news-feed";
+const CACHE = "sehrin-ne-oldu-v14-feed-dedupe-counts";
 const SHELL = ["./", "./index.html", "./styles.css", "./mobile-tune.css", "./image-cards.css", "./pulse-experience.css", "./app.js", "./pulse-experience.js", "./feed-data.js", "./feed-exit-reset.js", "./weather-ui.js", "./image-cards.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
