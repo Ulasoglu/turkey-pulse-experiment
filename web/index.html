@@ -31,13 +31,6 @@
 
     <main class="map-stage">
       <div id="map" aria-label="Türkiye gelişmeler haritası"></div>
-
-      <div id="mobileMapFilters" class="mobile-map-filters" aria-label="Harita filtreleri">
-        <button id="mobileProvincePill" class="map-filter-pill province-filter-pill" type="button" hidden></button>
-        <button id="mobileTimePill" class="map-filter-pill" type="button"><span id="mobileTimePillLabel">Bugün</span><b>⌄</b></button>
-        <button id="mobileCategoryPill" class="map-filter-pill" type="button"><span id="mobileCategoryPillLabel">Tümü</span><b>⌄</b></button>
-      </div>
-
       <label class="floating-search"><input id="searchInput" type="search" placeholder="Şehir, ilçe veya konu ara..." autocomplete="off" /><span>⌕</span></label>
       <button id="resetMapButton" class="layers-button"><span>▱</span> Türkiye</button>
       <div class="activity-legend" aria-label="İl hareketliliği"><strong>İL HAREKETLİLİĞİ</strong><div class="activity-scale"><span><i class="activity-0"></i>Sakin</span><span><i class="activity-1"></i>1</span><span><i class="activity-2"></i>2</span><span><i class="activity-3"></i>3+</span></div></div>
@@ -49,12 +42,8 @@
 
     <section id="mobileSheet" class="mobile-sheet">
       <button id="sheetHandle" class="sheet-handle" aria-label="Paneli aç veya kapat"><span></span></button>
-
-      <div class="mobile-legacy-filters" aria-hidden="true">
-        <div class="mobile-time-filters"><button data-time="now"><span>ϟ</span> Şimdi</button><button data-time="today"><span>▣</span> Bugün</button><button data-time="7d"><span>□</span> 7 Gün</button></div>
-        <div id="mobileCategories" class="mobile-categories"></div>
-      </div>
-
+      <div class="mobile-time-filters" aria-hidden="true"><button data-time="now"><span>ϟ</span> Şimdi</button><button data-time="today"><span>▣</span> Bugün</button><button data-time="7d"><span>□</span> 7 Gün</button></div>
+      <div id="mobileCategories" class="mobile-categories" aria-hidden="true"></div>
       <div class="mobile-feed-head"><div><h2 id="mobileFeedTitle">Bugün · Tümü</h2><p id="mobileFeedSubtitle">Güncel gelişmeler</p></div><button id="mobileFavoriteButton" class="mobile-favorite">☆</button></div>
       <div id="mobileFeedList" class="mobile-feed-list"></div>
     </section>
