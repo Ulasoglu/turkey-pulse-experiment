@@ -1,4 +1,4 @@
-const CACHE = "sehrin-ne-oldu-v10-integrated-filters";
+const CACHE = "sehrin-ne-oldu-v11-mobile-start-state";
 const SHELL = ["./", "./index.html", "./styles.css", "./mobile-tune.css", "./image-cards.css", "./pulse-experience.css", "./app.js", "./pulse-experience.js", "./weather-ui.js", "./image-cards.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
