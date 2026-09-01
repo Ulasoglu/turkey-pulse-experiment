@@ -23,26 +23,47 @@
       <section class="side-section"><h2>KATEGORİLER</h2><div id="desktopCategories" class="desktop-categories"></div></section>
       <button class="about-button">Hakkında</button>
     </aside>
-    <header class="mobile-header"><div class="mobile-brand"><div class="pin-logo">●</div><strong>ŞEHRİN NE OLDU?</strong></div><button id="mobileMenuButton" class="plain-button" aria-label="Menü">☰</button></header>
+
+    <header class="mobile-header">
+      <div class="mobile-brand"><div class="pin-logo">●</div><strong>ŞEHRİN NE OLDU?</strong></div>
+      <button id="mobileMenuButton" class="plain-button" aria-label="Menü">☰</button>
+    </header>
+
     <main class="map-stage">
       <div id="map" aria-label="Türkiye gelişmeler haritası"></div>
+
+      <div id="mobileMapFilters" class="mobile-map-filters" aria-label="Harita filtreleri">
+        <button id="mobileProvincePill" class="map-filter-pill province-filter-pill" type="button" hidden></button>
+        <button id="mobileTimePill" class="map-filter-pill" type="button"><span id="mobileTimePillLabel">Bugün</span><b>⌄</b></button>
+        <button id="mobileCategoryPill" class="map-filter-pill" type="button"><span id="mobileCategoryPillLabel">Tümü</span><b>⌄</b></button>
+      </div>
+
       <label class="floating-search"><input id="searchInput" type="search" placeholder="Şehir, ilçe veya konu ara..." autocomplete="off" /><span>⌕</span></label>
       <button id="resetMapButton" class="layers-button"><span>▱</span> Türkiye</button>
       <div class="activity-legend" aria-label="İl hareketliliği"><strong>İL HAREKETLİLİĞİ</strong><div class="activity-scale"><span><i class="activity-0"></i>Sakin</span><span><i class="activity-1"></i>1</span><span><i class="activity-2"></i>2</span><span><i class="activity-3"></i>3+</span></div></div>
       <div class="priority-legend" aria-label="Önem düzeyi"><span><i class="priority-high"></i> Yüksek</span><span><i class="priority-normal"></i> Normal</span><span><i class="priority-low"></i> Düşük</span></div>
       <div class="map-status"><i></i><span id="statusText">Veriler yükleniyor…</span></div>
     </main>
+
     <aside class="desktop-feed"><div class="desktop-feed-head"><div><h1 id="feedTitle">Bugün · Tümü</h1><p id="feedSubtitle">Güncel gelişmeler</p></div><button id="favoriteButton" class="favorite-button" aria-label="Şehri favorilere ekle">☆</button></div><div id="desktopFeedList" class="desktop-feed-list"></div><button id="showAllDesktop" class="show-all">Tümünü Gör</button></aside>
+
     <section id="mobileSheet" class="mobile-sheet">
       <button id="sheetHandle" class="sheet-handle" aria-label="Paneli aç veya kapat"><span></span></button>
-      <div class="mobile-time-filters"><button data-time="now"><span>ϟ</span> Şimdi</button><button data-time="today"><span>▣</span> Bugün</button><button data-time="7d"><span>□</span> 7 Gün</button></div>
-      <div id="mobileCategories" class="mobile-categories"></div>
+
+      <div class="mobile-legacy-filters" aria-hidden="true">
+        <div class="mobile-time-filters"><button data-time="now"><span>ϟ</span> Şimdi</button><button data-time="today"><span>▣</span> Bugün</button><button data-time="7d"><span>□</span> 7 Gün</button></div>
+        <div id="mobileCategories" class="mobile-categories"></div>
+      </div>
+
       <div class="mobile-feed-head"><div><h2 id="mobileFeedTitle">Bugün · Tümü</h2><p id="mobileFeedSubtitle">Güncel gelişmeler</p></div><button id="mobileFavoriteButton" class="mobile-favorite">☆</button></div>
       <div id="mobileFeedList" class="mobile-feed-list"></div>
     </section>
+
     <nav class="mobile-bottom-nav" aria-label="Alt menü"><button id="mobileMap" class="active"><span>⌖</span>Harita</button><button id="mobileDevelopments"><span>▤</span>Gelişmeler</button><button id="mobileSearch"><span>⌕</span>Arama</button><button id="mobileFavorites"><span>♡</span>Favorilerim</button></nav>
   </div>
+
   <template id="feedCardTemplate"><article class="feed-card"><div class="feed-row-icon"></div><div class="feed-card-body"><div class="feed-meta"><span class="category-name"></span><time></time></div><h3></h3><p class="feed-place"></p><p class="feed-source"></p></div><span class="priority-pill"></span><div class="feed-actions"><button class="show-on-map">Haritada göster</button><a class="source-link" target="_blank" rel="noopener noreferrer">Orijinali aç</a></div></article></template>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="app.js" defer></script>
   <script src="pulse-experience.js" defer></script>
