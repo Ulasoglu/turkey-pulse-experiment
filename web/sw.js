@@ -1,5 +1,5 @@
-const CACHE = "sehrin-ne-oldu-v11-mobile-start-state";
-const SHELL = ["./", "./index.html", "./styles.css", "./mobile-tune.css", "./image-cards.css", "./pulse-experience.css", "./app.js", "./pulse-experience.js", "./weather-ui.js", "./image-cards.js", "./manifest.webmanifest"];
+const CACHE = "sehrin-ne-oldu-v12-province-exit-reset";
+const SHELL = ["./", "./index.html", "./styles.css", "./mobile-tune.css", "./image-cards.css", "./pulse-experience.css", "./app.js", "./pulse-experience.js", "./feed-exit-reset.js", "./weather-ui.js", "./image-cards.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
