@@ -12,7 +12,7 @@ OUTFILE = ROOT / "data" / "map_signals.jsonl"
 CORE_MANIFEST = ROOT / "sources.json"
 MUNICIPAL_MANIFEST = ROOT / "municipal_sources.json"
 MUNICIPAL_OVERRIDES = ROOT / "municipal_sources_overrides.json"
-ENGINE_VERSION = "signal-engine-v10-service-inflections"
+ENGINE_VERSION = "signal-engine-v11-event-precedence"
 
 CATEGORY_RULES = [
     ("WEATHER", {"uyarı", "sağanak", "yağış", "fırtına", "rüzgâr", "rüzgar", "sıcak", "sıcaklık", "sel", "taşkın", "heyelan"}),
@@ -23,30 +23,11 @@ CATEGORY_RULES = [
 ]
 EVENT_CATEGORY_TERMS = {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "gösteri", "söyleşi", "atölye"}
 SERVICE_CATEGORY_TERMS = {"başvuru", "kayıt", "destek", "yardım", "burs", "hibe", "müracaat", "kurs"}
-SERVICE_STEM_PATTERN = re.compile(
-    r"(?<!\w)(?:başvuru|kayıt|destek|yardım|burs|hibe|müracaat|kurs)\w*",
-    flags=re.UNICODE,
-)
+SERVICE_STEM_PATTERN = re.compile(r"(?<!\w)(?:başvuru|kayıt|destek|yardım|burs|hibe|müracaat|kurs)\w*", flags=re.UNICODE)
 HIGH_RELEVANCE_TERMS = {"uyarı", "kapatıldı", "kapatılacak", "kesintisi", "kesinti", "arıza", "trafik", "ulaşım", "deprem", "yangın", "sağanak", "fırtına", "yağış", "sel", "taşkın", "heyelan"}
 MEDIUM_RELEVANCE_TERMS = {"etkinlik", "festival", "konser", "sergi", "tiyatro", "sinema", "fuar", "şenlik", "turnuva", "yarış", "yenileme", "altyapı", "bakım", "onarım", "asfalt", "kanalizasyon", "proje", "başvuru", "kayıt", "destek", "yardım", "burs", "hibe"}
-LIFETIMES = {
-    "EARTHQUAKE": timedelta(hours=24),
-    "WEATHER": timedelta(hours=24),
-    "TRAFFIC": timedelta(hours=24),
-    "UTILITY": timedelta(hours=24),
-    "EVENT": timedelta(days=7),
-    "INFRASTRUCTURE": timedelta(days=7),
-    "OTHER": timedelta(days=3),
-}
-NOW_WINDOWS = {
-    "EARTHQUAKE": timedelta(hours=3),
-    "WEATHER": timedelta(hours=6),
-    "TRAFFIC": timedelta(hours=6),
-    "UTILITY": timedelta(hours=6),
-    "EVENT": timedelta(hours=24),
-    "INFRASTRUCTURE": timedelta(hours=24),
-    "OTHER": timedelta(hours=24),
-}
+LIFETIMES = {"EARTHQUAKE": timedelta(hours=24), "WEATHER": timedelta(hours=24), "TRAFFIC": timedelta(hours=24), "UTILITY": timedelta(hours=24), "EVENT": timedelta(days=7), "INFRASTRUCTURE": timedelta(days=7), "OTHER": timedelta(days=3)}
+NOW_WINDOWS = {"EARTHQUAKE": timedelta(hours=3), "WEATHER": timedelta(hours=6), "TRAFFIC": timedelta(hours=6), "UTILITY": timedelta(hours=6), "EVENT": timedelta(hours=24), "INFRASTRUCTURE": timedelta(hours=24), "OTHER": timedelta(hours=24)}
 
 
 def text(v):
@@ -81,7 +62,6 @@ def parse_iso(v):
 def load_municipal_rows():
     if not MUNICIPAL_MANIFEST.exists():
         return {}, {"max_age_days": 7}
-
     payload = json.loads(MUNICIPAL_MANIFEST.read_text(encoding="utf-8"))
     defaults = payload.get("defaults") or {"max_age_days": 7}
     by_id = {}
@@ -89,7 +69,6 @@ def load_municipal_rows():
         source_id = text(row.get("source_id"))
         if source_id:
             by_id[source_id] = dict(row)
-
     if MUNICIPAL_OVERRIDES.exists():
         patch = json.loads(MUNICIPAL_OVERRIDES.read_text(encoding="utf-8"))
         for addition in patch.get("additions", []):
@@ -100,20 +79,15 @@ def load_municipal_rows():
             source_id = text(override.get("source_id"))
             if source_id in by_id:
                 by_id[source_id].update(override)
-
     return by_id, defaults
 
 
 def load_policies():
     manifest = json.loads(CORE_MANIFEST.read_text(encoding="utf-8"))
     policies = {s["id"]: s.get("freshness_policy", {}) for s in manifest.get("sources", []) if s.get("id")}
-
     municipal_rows, defaults = load_municipal_rows()
     for source_id, row in municipal_rows.items():
-        policies[source_id] = {
-            "kind": "news",
-            "max_age_days": int(row.get("max_age_days", defaults.get("max_age_days", 7))),
-        }
+        policies[source_id] = {"kind": "news", "max_age_days": int(row.get("max_age_days", defaults.get("max_age_days", 7)))}
     return policies
 
 
@@ -131,22 +105,22 @@ def detect_category(row, policies):
     sid = text(row.get("source_id"))
     title = normalize(row.get("title"))
     filter_reason = text(row.get("filter_reason"))
-
     if sid == "afad_event_service":
         return "EARTHQUAKE"
     if sid == "ecmwf_open_data_weather" and row.get("derived_signal") is True:
         return "WEATHER"
-
-    if filter_reason.startswith(("active_local_impact:", "municipal_local_impact:")):
-        return "INFRASTRUCTURE"
     if filter_reason.startswith("public_event:"):
         return "EVENT"
+    # Explicit event language must outrank generic municipal/local-impact labels.
+    # This prevents items such as a basketball tournament from becoming INFRASTRUCTURE.
+    if has_any(title, EVENT_CATEGORY_TERMS) and not service_opportunity(row):
+        return "EVENT"
+    if filter_reason.startswith(("active_local_impact:", "municipal_local_impact:")):
+        return "INFRASTRUCTURE"
     if filter_reason.startswith(("municipal_service:", "ambiguous_event_service:")):
         return "OTHER"
-
     if source_is_event(row, policies):
         return "OTHER" if service_opportunity(row) else "EVENT"
-
     for category, terms in CATEGORY_RULES:
         if has_any(title, terms):
             return category
@@ -157,7 +131,6 @@ def detect_relevance(row, category, policies):
     sid = text(row.get("source_id"))
     filter_decision = text(row.get("filter_decision"))
     filter_reason = text(row.get("filter_reason"))
-
     if sid == "ecmwf_open_data_weather" and category == "WEATHER":
         return "HIGH" if filter_decision == "KEEP" else "LOW"
     if source_is_event(row, policies):
@@ -168,7 +141,6 @@ def detect_relevance(row, category, policies):
         return "MEDIUM"
     if filter_reason.startswith(("active_local_impact:", "municipal_local_impact:", "municipal_service:", "ambiguous_event_service:")):
         return "MEDIUM"
-
     title = normalize(row.get("title"))
     if category == "EARTHQUAKE":
         try:
@@ -269,33 +241,22 @@ def main():
     cats = Counter()
     rels = Counter()
     freshs = Counter()
-
     for row in rows:
         cat = detect_category(row, policies)
         rel = detect_relevance(row, cat, policies)
         fresh, age, expires = freshness(row, cat, now, policies)
         decision = decide(row, cat, rel, fresh)
         out = dict(row)
-        out.update(
-            signal_category=cat,
-            signal_relevance=rel,
-            signal_freshness=fresh,
-            signal_age_minutes=round(age.total_seconds() / 60, 1) if age is not None else None,
-            expires_at=expires.isoformat() if expires else None,
-            map_decision=decision,
-            signal_engine_version=ENGINE_VERSION,
-        )
+        out.update(signal_category=cat, signal_relevance=rel, signal_freshness=fresh, signal_age_minutes=round(age.total_seconds() / 60, 1) if age is not None else None, expires_at=expires.isoformat() if expires else None, map_decision=decision, signal_engine_version=ENGINE_VERSION)
         results.append(out)
         vis[decision] += 1
         cats[cat] += 1
         rels[rel] += 1
         freshs[fresh] += 1
-
     OUTFILE.parent.mkdir(parents=True, exist_ok=True)
     with OUTFILE.open("w", encoding="utf-8") as f:
         for row in results:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
-
     print("\n=== TURKEY PULSE SIGNAL ENGINE ===")
     print(f"VERSION: {ENGINE_VERSION}")
     print(f"AS OF:   {now.isoformat()}")
