@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -25,3 +25,14 @@ jobs:
         run: python -u probe_aa_bursa_test_only.py
       - name: Cluster into one Bursa feed
         run: python -u build_bursa_test_feed.py
+      - name: Persist TEST_ONLY feed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/data/bursa-test-feed.json
+          if git diff --cached --quiet; then
+            echo "No Bursa test feed changes"
+          else
+            git commit -m "Update Bursa TEST_ONLY product feed"
+            git push
+          fi
