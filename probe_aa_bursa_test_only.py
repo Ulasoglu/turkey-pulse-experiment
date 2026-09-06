@@ -13,9 +13,13 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-SEARCH_URL = "https://www.aa.com.tr/tr/arama/?s=Bursa"
+# AA's search page is JS-dependent. The server-rendered Gündem page exposes current
+# article links, so the probe discovers there and keeps only articles whose title/
+# description/body identify Bursa.
+DISCOVERY_URL = "https://www.aa.com.tr/tr/gundem"
 OUT = Path("data/test_only_aa_bursa.jsonl")
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; TurkeyPulseFeasibilityTest/1.0)"}
+MAX_CANDIDATES = 60
 MAX_ARTICLES = 12
 
 
@@ -33,28 +37,24 @@ def meta(soup: BeautifulSoup, *keys: tuple[str, str]) -> str | None:
     return None
 
 
-def article_links(html: str) -> list[str]:
+def candidate_links(html: str) -> list[str]:
     soup = BeautifulSoup(html, "html.parser")
     links: list[str] = []
     for a in soup.find_all("a", href=True):
-        href = urljoin("https://www.aa.com.tr", a["href"]).split("#", 1)[0]
-        if not href.startswith("https://www.aa.com.tr/tr/"):
-            continue
-        if "/arama" in href or href.rstrip("/") == "https://www.aa.com.tr/tr":
-            continue
-        text = a.get_text(" ", strip=True).lower()
-        if "bursa" not in (text + " " + href.lower()):
+        href = urljoin("https://www.aa.com.tr", a["href"]).split("#", 1)[0].rstrip("/")
+        if not re.match(r"https://www\.aa\.com\.tr/tr/[^/]+/.+/\d+$", href):
             continue
         if href not in links:
             links.append(href)
-    return links[:MAX_ARTICLES]
+    return links[:MAX_CANDIDATES]
 
 
-def parse_article(url: str) -> dict:
+def parse_article(url: str) -> dict | None:
     soup = BeautifulSoup(get(url).text, "html.parser")
     title = meta(soup, ("property", "og:title"), ("name", "twitter:title"))
     if not title and soup.h1:
         title = soup.h1.get_text(" ", strip=True)
+    description = meta(soup, ("property", "og:description"), ("name", "description")) or ""
     image = meta(soup, ("property", "og:image"), ("name", "twitter:image"))
     published = meta(soup, ("property", "article:published_time"), ("name", "date"))
 
@@ -77,9 +77,19 @@ def parse_article(url: str) -> dict:
             elif not image and isinstance(raw_image, dict):
                 image = raw_image.get("url")
 
+    text = soup.get_text(" ", strip=True)
+    haystack = f"{title or ''} {description} {text[:5000]}".lower()
+    if "bursa" not in haystack:
+        return None
+
     if not published:
-        text = soup.get_text(" ", strip=True)
-        m = re.search(r"\b\d{1,2}\.\d{1,2}\.\d{4}\s*(?:-|,)?\s*\d{1,2}:\d{2}\b", text)
+        # AA visibly renders dates like '06 Eylül 2026'. Keep the source string for
+        # this feasibility probe; normalization can happen in the shared adapter.
+        m = re.search(
+            r"\b\d{1,2}\s+(?:Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık)\s+\d{4}\b",
+            text,
+            re.IGNORECASE,
+        )
         published = m.group(0) if m else None
 
     return {
@@ -96,13 +106,17 @@ def parse_article(url: str) -> dict:
 
 def main() -> None:
     print("=== AA BURSA TEST_ONLY PROBE ===")
-    print("Search:", SEARCH_URL)
-    links = article_links(get(SEARCH_URL).text)
-    print("Article links found:", len(links))
+    print("Discovery:", DISCOVERY_URL)
+    links = candidate_links(get(DISCOVERY_URL).text)
+    print("Candidate links found:", len(links))
     rows = []
     for url in links:
+        if len(rows) >= MAX_ARTICLES:
+            break
         try:
             row = parse_article(url)
+            if not row:
+                continue
             rows.append(row)
             print("OK", row.get("published_at"), row.get("title"), "IMAGE=", bool(row.get("image_url")))
         except Exception as exc:
