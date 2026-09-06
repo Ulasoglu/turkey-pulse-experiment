@@ -1,0 +1,340 @@
+{
+  "test_only": true,
+  "province": "Bursa",
+  "raw_items": 25,
+  "event_count": 22,
+  "events": [
+    {
+      "id": "bursa-test-1",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Bursa - Mudanya",
+      "published_at": "2026-09-07T00:26:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/61d751d1470a9b2a6876c5b7.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/bursa-mudanyada-ido-deniz-otobusu-iskeleye-c-2940443",
+      "sources": [
+        "DHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-2",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "İnegölspor-12 Bingölspor: 2-2",
+      "published_at": "2026-09-06T21:03:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/6a9dac463376f2f09557578e.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/inegol/inegolspor-12-bingolspor-2-2-2940356",
+      "sources": [
+        "DHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-3",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Bursa - 5 aracın karıştığı kazada 7 yaşındaki Hediyenur, yaralandı",
+      "published_at": "2026-09-06T16:51:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/61d751d1470a9b2a6876c5b7.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/inegol/bursa-5-aracin-karistigi-kazada-7-yasindaki-h-2940267",
+      "sources": [
+        "DHA",
+        "IHA"
+      ],
+      "source_count": 2,
+      "cluster_size": 3,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-4",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Bursaspor, Manisa FK maçı hazırlıklarını tamamladı",
+      "published_at": "2026-09-06T16:43:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/6a9d6f193f3830142ef1feb0.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/bursaspor-manisa-fk-maci-hazirliklarini-tamaml-2940265",
+      "sources": [
+        "DHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-5",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "İnegöllüler 104 yıl sonra kurtuluşun izinde yürüdü",
+      "published_at": "2026-09-06T16:23:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/6a9d6a3a9e0592ad7bdbe7af.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/inegol/inegolluler-104-yil-sonra-kurtulusun-izinde-yur-2940250",
+      "sources": [
+        "DHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-6",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Yenişehir’in düşman işgalinden kurtuluşu kutlandı",
+      "published_at": "2026-09-06T16:16:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/6a9d68c6bd167f4f787a611f.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/yenisehir/yenisehirin-dusman-isgalinden-kurtulusu-kutlan-2940247",
+      "sources": [
+        "DHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-7",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "‘MobilFest 2026’ Mudanya’da",
+      "published_at": "2026-09-06T16:07:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/6a9d66a9515692e5d8f09e07.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/mudanya/mobilfest-2026-mudanyada-2940238",
+      "sources": [
+        "DHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-8",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "‘2’nci Kukla ve Karagöz Buluşması’ Bursa’da gerçekleştirildi",
+      "published_at": "2026-09-06T16:07:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/6a9d66b0515692e5d8f09e17.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/2nci-kukla-ve-karagoz-bulusmasi-bursada-ger-2940239",
+      "sources": [
+        "DHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-9",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Bursa’da ‘Çocuk Şenliği’",
+      "published_at": "2026-09-06T16:06:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/6a9d66b2515692e5d8f09e1e.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/bursada-cocuk-senligi-2940240",
+      "sources": [
+        "DHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-10",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "İnegöl Gastronomi Festivali’nde Aslı Hünel ve Retrobüs konseri",
+      "published_at": "2026-09-06T16:06:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/6a9d66b5515692e5d8f09e2d.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/inegol/inegol-gastronomi-festivalinde-asli-hunel-ve-r-2940241",
+      "sources": [
+        "DHA",
+        "IHA"
+      ],
+      "source_count": 2,
+      "cluster_size": 2,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-11",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Yıldırım Belediye Başkanı, üniversite sınavını kazanan gençlerle buluştu",
+      "published_at": "2026-09-06T16:06:00+00:00",
+      "image_url": "https://image.dha.com.tr/i/dha/75/0x0/6a9d66b7515692e5d8f09e38.jpg",
+      "source_url": "https://www.dha.com.tr/yerel-haberler/bursa/yildirim-belediye-baskani-universite-sinavini-2940242",
+      "sources": [
+        "DHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-12",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Yenişehir’de 6 Eylül ruhu 104 yıl sonra yeniden canlandı İhlas Haber Ajansı",
+      "published_at": null,
+      "image_url": "https://cdn.iha.com.tr/Contents/images/2026/09/07/20260906aw782706-0.jpg",
+      "source_url": "https://www.iha.com.tr/bursa-haberleri/yenisehirde-6-eylul-ruhu-104-yil-sonra-yeniden-canlandi-481261773",
+      "sources": [
+        "IHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-13",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Çocukların limonatalarını Bursa Büyükşehir ekipleri satın aldı İhlas Haber Ajansı",
+      "published_at": null,
+      "image_url": "https://cdn.iha.com.tr/Contents/images/2026/09/06/20260906aw782684-0.jpg",
+      "source_url": "https://www.iha.com.tr/bursa-haberleri/cocuklarin-limonatalarini-bursa-buyuksehir-ekipleri-satin-aldi-481244255",
+      "sources": [
+        "IHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-14",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "AFAD’tan Emir’in bulunmasında görev alan ekiplere teşekkür İhlas Haber Ajansı",
+      "published_at": null,
+      "image_url": "https://cdn.iha.com.tr/Contents/images/2026/09/07/20260906aw782655-0.jpg",
+      "source_url": "https://www.iha.com.tr/bursa-haberleri/afadtan-emirin-bulunmasinda-gorev-alan-ekiplere-tesekkur-481229228",
+      "sources": [
+        "IHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-15",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Bursa’da Karagöz ve kukla rüzgârı esti İhlas Haber Ajansı",
+      "published_at": null,
+      "image_url": "https://cdn.iha.com.tr/Contents/images/2026/09/07/20260906aw782654-0.jpg",
+      "source_url": "https://www.iha.com.tr/bursa-haberleri/bursada-karagoz-ve-kukla-ruzgari-esti-481228186",
+      "sources": [
+        "IHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-16",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Bursa’da çocukların şenlik coşkusu İhlas Haber Ajansı",
+      "published_at": null,
+      "image_url": "https://cdn.iha.com.tr/Contents/images/2026/09/07/20260906aw782653-0.jpg",
+      "source_url": "https://www.iha.com.tr/bursa-haberleri/bursada-cocuklarin-senlik-coskusu-481228187",
+      "sources": [
+        "IHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-17",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Mudanya’da bilim dolu gece İhlas Haber Ajansı",
+      "published_at": null,
+      "image_url": "https://cdn.iha.com.tr/Contents/images/2026/09/07/20260906aw782651-0.jpg",
+      "source_url": "https://www.iha.com.tr/bursa-haberleri/mudanyada-bilim-dolu-gece-481228189",
+      "sources": [
+        "IHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-18",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "İnegöl’ün kurtuluşunun 104. yılı gurur ve coşkuyla kutlanıyor İhlas Haber Ajansı",
+      "published_at": null,
+      "image_url": "https://cdn.iha.com.tr/Contents/images/2026/09/06/20260906aw782643-0.jpg",
+      "source_url": "https://www.iha.com.tr/bursa-haberleri/inegolun-kurtulusunun-104-yili-gurur-ve-coskuyla-kutlaniyor-481221929",
+      "sources": [
+        "IHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-19",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Kaybolan çocuğuna kavuşan anne sevinçten bayıldı İhlas Haber Ajansı",
+      "published_at": null,
+      "image_url": "https://cdn.iha.com.tr/Contents/images/2026/09/07/20260906aw782604-0.jpg",
+      "source_url": "https://www.iha.com.tr/bursa-haberleri/kaybolan-cocuguna-kavusan-anne-sevincten-bayildi-481200686",
+      "sources": [
+        "IHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-20",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Orhaneli’de orman yangını İhlas Haber Ajansı",
+      "published_at": null,
+      "image_url": "https://cdn.iha.com.tr/Contents/images/2026/09/07/20260906aw782571-0.jpg",
+      "source_url": "https://www.iha.com.tr/bursa-haberleri/orhanelide-orman-yangini-481186527",
+      "sources": [
+        "IHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-21",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Uyumayan kütüphaneden üniversiteye İhlas Haber Ajansı",
+      "published_at": null,
+      "image_url": "https://cdn.iha.com.tr/Contents/images/2026/09/07/20260906aw782546-0.jpg",
+      "source_url": "https://www.iha.com.tr/bursa-haberleri/uyumayan-kutuphaneden-universiteye-481170133",
+      "sources": [
+        "IHA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    },
+    {
+      "id": "bursa-test-22",
+      "test_only": true,
+      "province": "Bursa",
+      "title": "Yargıtay, tartıştığı iş arkadaşına vuran işçinin tazminatsız kovulmasını haklı buldu",
+      "published_at": "2026-09-06T11:46:10.107",
+      "image_url": "https://web-cdnprod.aa.com.tr/uploads/Contents/2026/09/06/thumbs_b_c_1106127ee687c1dcff199e6b1f4892d8.jpg",
+      "source_url": "https://www.aa.com.tr/tr/gundem/yargitay-tartistigi-is-arkadasina-vuran-iscinin-tazminatsiz-kovulmasini-hakli-buldu/4048655",
+      "sources": [
+        "AA"
+      ],
+      "source_count": 1,
+      "cluster_size": 1,
+      "rights_status": "test_only_no_media_rehosting"
+    }
+  ]
+}
