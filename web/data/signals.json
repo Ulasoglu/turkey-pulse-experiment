@@ -180,7 +180,7 @@
     "precipitation_mm_24h": null
   },
   {
-    "id": "cluster_c6386516a87d",
+    "id": "cluster_60f5d5cd5822",
     "province": "Konya",
     "category": "EVENT",
     "title": "ÜÇ HAREM",
@@ -195,7 +195,7 @@
     "venue": null,
     "latitude": null,
     "longitude": null,
-    "signal_count": 8,
+    "signal_count": 7,
     "source_count": 1,
     "magnitude": null,
     "depth_km": null,
@@ -240,10 +240,10 @@
     "precipitation_mm_24h": null
   },
   {
-    "id": "cluster_84278de3466d",
+    "id": "cluster_32f71f985f1a",
     "province": "Bursa",
     "category": "EVENT",
-    "title": "Gülen Gözler - Kültürpark Yeşilçam Sinema Akşamları",
+    "title": "Kültürpark Yeşilçam Sinema Akşamları",
     "relevance": "MEDIUM",
     "freshness": "NOW",
     "published_at": "2026-09-05T21:00:00+00:00",
@@ -255,7 +255,7 @@
     "venue": "Kültürpark Göl Kenarı",
     "latitude": null,
     "longitude": null,
-    "signal_count": 2,
+    "signal_count": 1,
     "source_count": 1,
     "magnitude": null,
     "depth_km": null,
@@ -275,7 +275,7 @@
     "category": "OTHER",
     "title": "İzmir’de Kış Spor Okulları için kayıt zamanı",
     "relevance": "MEDIUM",
-    "freshness": "NOW",
+    "freshness": "RECENT",
     "published_at": "2026-09-05T00:00:00+00:00",
     "source_id": "izmir_bb_news",
     "source_url": "https://www.izmir.bel.tr/tr/Haberler/izmir-de-kis-spor-okullari-icin-kayit-zamani/59295/156",
