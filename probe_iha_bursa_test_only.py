@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urljoin
+from zoneinfo import ZoneInfo
 
 import requests
 from bs4 import BeautifulSoup
@@ -17,6 +19,7 @@ LISTING_URL = "https://www.iha.com.tr/bursa-haberleri"
 OUT = Path("data/test_only_iha_bursa.jsonl")
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; TurkeyPulseFeasibilityTest/1.0)"}
 MAX_ARTICLES = 15
+ISTANBUL = ZoneInfo("Europe/Istanbul")
 
 
 def get(url: str) -> requests.Response:
@@ -45,6 +48,43 @@ def article_links(html: str) -> list[str]:
     return links[:MAX_ARTICLES]
 
 
+def normalize_date(value: str | None) -> str | None:
+    if not value:
+        return None
+    value = value.strip()
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=ISTANBUL)
+        return dt.isoformat()
+    except ValueError:
+        pass
+    for pattern in (
+        r"(\d{1,2})[./-](\d{1,2})[./-](\d{4})\s*(?:-|,)?\s*(\d{1,2}):(\d{2})",
+        r"(\d{1,2})[./-](\d{1,2})[./-](\d{4})",
+    ):
+        m = re.search(pattern, value)
+        if m:
+            parts = [int(x) for x in m.groups()]
+            day, month, year = parts[:3]
+            hour, minute = (parts[3], parts[4]) if len(parts) == 5 else (0, 0)
+            return datetime(year, month, day, hour, minute, tzinfo=ISTANBUL).isoformat()
+    return value
+
+
+def find_visible_date(soup: BeautifulSoup) -> str | None:
+    text = soup.get_text(" ", strip=True)
+    patterns = (
+        r"\b\d{1,2}[./-]\d{1,2}[./-]\d{4}\s*(?:-|,)?\s*\d{1,2}:\d{2}\b",
+        r"\b\d{1,2}[./-]\d{1,2}[./-]\d{4}\b",
+    )
+    for pattern in patterns:
+        m = re.search(pattern, text)
+        if m:
+            return m.group(0)
+    return None
+
+
 def parse_article(url: str) -> dict:
     soup = BeautifulSoup(get(url).text, "html.parser")
     title = meta(soup, ("property", "og:title"), ("name", "twitter:title"))
@@ -70,7 +110,7 @@ def parse_article(url: str) -> dict:
             if not isinstance(item, dict):
                 continue
             title = title or item.get("headline")
-            published = published or item.get("datePublished")
+            published = published or item.get("datePublished") or item.get("dateCreated")
             raw_image = item.get("image")
             if not image and isinstance(raw_image, str):
                 image = raw_image
@@ -78,6 +118,8 @@ def parse_article(url: str) -> dict:
                 image = raw_image[0] if isinstance(raw_image[0], str) else None
             elif not image and isinstance(raw_image, dict):
                 image = raw_image.get("url")
+
+    published = normalize_date(published or find_visible_date(soup))
 
     return {
         "test_only": True,
@@ -112,6 +154,7 @@ def main() -> None:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     print("Rows written:", len(rows))
+    print("With timestamps:", sum(bool(r.get("published_at")) for r in rows))
     print("With image metadata:", sum(bool(r.get("image_url")) for r in rows))
     print("Output:", OUT)
     print("TEST_ONLY: not merged into raw_signals.jsonl")
