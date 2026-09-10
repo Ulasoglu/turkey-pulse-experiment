@@ -150,7 +150,7 @@
     "precipitation_mm_24h": null
   },
   {
-    "id": "cluster_a5f400410ac7",
+    "id": "cluster_3123c210ba90",
     "province": "Konya",
     "category": "EVENT",
     "title": "ÜÇ HAREM",
@@ -165,7 +165,7 @@
     "venue": null,
     "latitude": null,
     "longitude": null,
-    "signal_count": 8,
+    "signal_count": 7,
     "source_count": 1,
     "magnitude": null,
     "depth_km": null,
@@ -335,7 +335,7 @@
     "category": "OTHER",
     "title": "Kuruluştan Kurtuluşa Bursa Sergisi",
     "relevance": "MEDIUM",
-    "freshness": "NOW",
+    "freshness": "RECENT",
     "published_at": "2026-09-09T00:00:00+00:00",
     "source_id": "bursa_open_data_events",
     "source_url": "https://www.bursa.bel.tr/etkinlik",
