@@ -305,7 +305,7 @@
     "category": "EVENT",
     "title": "Boşanmama Rehberi",
     "relevance": "MEDIUM",
-    "freshness": "RECENT",
+    "freshness": "NOW",
     "published_at": "2026-10-04T20:00:00+00:00",
     "source_id": "bursa_open_data_events",
     "source_url": "https://www.bursa.bel.tr/etkinlik",
