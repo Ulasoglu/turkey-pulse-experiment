@@ -185,7 +185,7 @@
     "category": "EVENT",
     "title": "Konya Okulu - Ahmet Özkan",
     "relevance": "MEDIUM",
-    "freshness": "RECENT",
+    "freshness": "NOW",
     "published_at": "2026-10-10T00:00:00+00:00",
     "source_id": "konya_bb_events",
     "source_url": "https://kultursanatkonya.com/etkinlikler/konya-okulu-ahmet-ozkan/1214",
@@ -210,7 +210,7 @@
     "precipitation_mm_24h": null
   },
   {
-    "id": "cluster_64411e69abb4",
+    "id": "cluster_7582acf54807",
     "province": "Konya",
     "category": "EVENT",
     "title": "Konya Okulu - Prof. Dr. İbrahim Işıtan",
@@ -225,7 +225,7 @@
     "venue": null,
     "latitude": null,
     "longitude": null,
-    "signal_count": 7,
+    "signal_count": 6,
     "source_count": 1,
     "magnitude": null,
     "depth_km": null,
