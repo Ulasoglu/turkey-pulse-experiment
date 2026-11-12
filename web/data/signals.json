@@ -150,12 +150,12 @@
     "precipitation_mm_24h": null
   },
   {
-    "id": "cluster_d1ca4af689a9",
+    "id": "cluster_8af1267650cf",
     "province": "Konya",
     "category": "EVENT",
     "title": "Konya Okulu - Prof. Dr. İbrahim Işıtan",
     "relevance": "MEDIUM",
-    "freshness": "RECENT",
+    "freshness": "NOW",
     "published_at": "2026-11-13T00:00:00+00:00",
     "source_id": "konya_bb_events",
     "source_url": "https://kultursanatkonya.com/etkinlikler/konya-okulu-prof-dr-ibrahim-isitan/1213",
@@ -165,7 +165,7 @@
     "venue": null,
     "latitude": null,
     "longitude": null,
-    "signal_count": 8,
+    "signal_count": 7,
     "source_count": 1,
     "magnitude": null,
     "depth_km": null,
